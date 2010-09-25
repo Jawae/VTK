@@ -197,6 +197,11 @@ public:
   virtual void OnRightButtonUp() {};
   virtual void OnMouseWheelForward() {};
   virtual void OnMouseWheelBackward() {};
+  virtual void OnGestureStart() {};
+  virtual void OnGestureEnd() {};
+  virtual void OnPinchGesture() {};
+  virtual void OnRotateGesture() {};
+  virtual void OnSwipeGesture() {};
 
   // Description:
   // OnChar is triggered when an ASCII key is pressed. Some basic key presses

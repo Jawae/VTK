@@ -15,8 +15,10 @@
 
 #import "vtkCocoaGLView.h"
 #import "vtkCocoaRenderWindow.h"
+#import "vtkRenderer.h"
 #import "vtkCocoaRenderWindowInteractor.h"
 #import "vtkCommand.h"
+#include "vtkMath.h"
 
 
 @implementation vtkCocoaGLView
@@ -585,6 +587,7 @@ static const char *vtkMacKeyCodeToKeySymTable[128] = {
     }
 }
 
+
 //----------------------------------------------------------------------------
 // Overridden (from NSResponder).
 - (void)mouseDown:(NSEvent *)theEvent
@@ -828,4 +831,185 @@ static const char *vtkMacKeyCodeToKeySymTable[128] = {
   while (keepOn);
 }
 
+//----------------------------------------------------------------------------
+// Overridden (from NSResponder).
+- (void)beginGestureWithEvent:(NSEvent *)theEvent{
+  vtkCocoaRenderWindowInteractor *interactor = [self getInteractor];
+  if (!interactor)
+    {
+    return;
+    }
+
+    interactor->InvokeEvent(vtkCommand::GestureStartEvent, NULL);
+}
+
+//----------------------------------------------------------------------------
+// Overridden (from NSResponder).
+- (void)endGestureWithEvent:(NSEvent *)theEvent{
+  vtkCocoaRenderWindowInteractor *interactor = [self getInteractor];
+  if (!interactor)
+    {
+    return;
+    }
+
+    interactor->InvokeEvent(vtkCommand::GestureEndEvent, NULL);
+}
+
+//----------------------------------------------------------------------------
+// Overridden (from NSResponder).
+- (void)magnifyWithEvent:(NSEvent *)theEvent{
+  vtkCocoaRenderWindowInteractor *interactor = [self getInteractor];
+  if (!interactor)
+    {
+    return;
+    }
+
+  vtkCocoaRenderWindow* renWin =
+    vtkCocoaRenderWindow::SafeDownCast([self getVTKRenderWindow]);
+
+  if (!renWin)
+    {
+    return;
+    }
+
+  BOOL keepOn = YES;
+  float zoom = 0.0;
+  NSDate*  infinity = [NSDate distantFuture];
+  do
+    {
+    theEvent = [NSApp nextEventMatchingMask: NSEventMaskEndGesture |
+                                             NSEventMaskMagnify
+                      untilDate: infinity
+                      inMode: NSEventTrackingRunLoopMode
+                      dequeue: YES];
+    if (theEvent)
+      {
+      switch ([theEvent type])
+        {
+      case NSEventTypeMagnify:
+        zoom = [theEvent magnification];
+        interactor->SetPinchGestureFactor(zoom + 1.0);
+        interactor->InvokeEvent(vtkCommand::PinchGestureEvent, NULL);
+        break;
+      case NSEventTypeEndGesture:
+        keepOn = NO;
+      default:
+        break;
+        }
+      }
+    else
+      {
+      keepOn = NO;
+      }
+    }
+  while (keepOn);
+}
+
+//----------------------------------------------------------------------------
+// Overridden (from NSResponder).
+- (void)rotateWithEvent:(NSEvent *)theEvent{
+  vtkCocoaRenderWindowInteractor *interactor = [self getInteractor];
+  if (!interactor)
+    {
+    return;
+    }
+
+  vtkCocoaRenderWindow* renWin =
+    vtkCocoaRenderWindow::SafeDownCast([self getVTKRenderWindow]);
+
+  if (!renWin)
+    {
+    return;
+    }
+
+  // Retrieve the scaling factor.
+  double factor = renWin->GetScaleFactor();
+
+  BOOL keepOn = YES;
+
+  float rotation = 0.0;
+
+  // Get the location of the mouse event relative to this NSView's bottom
+  // left corner. Since this is a mouseevent, we can use locationInWindow.
+  NSPoint mouseLoc =
+    [self convertPoint:[theEvent locationInWindow] fromView:nil];
+
+  int shiftDown = ([theEvent modifierFlags] & NSShiftKeyMask) ? 1 : 0;
+  int controlDown = 1;
+  int altDown = ([theEvent modifierFlags] &
+                  (NSCommandKeyMask | NSAlternateKeyMask)) ? 1 : 0;
+
+  // The mouse location is in points, we must convert to pixels using the
+  // scaling factor.
+  interactor->SetEventInformation((int)round(mouseLoc.x * factor),
+                                  (int)round(mouseLoc.y * factor),
+                                  controlDown, shiftDown);
+  interactor->SetAltKey(altDown);
+
+  NSDate*  infinity = [NSDate distantFuture];
+  do
+    {
+    theEvent = [NSApp nextEventMatchingMask: NSEventMaskEndGesture |
+                                             NSEventMaskRotate
+                      untilDate: infinity
+                      inMode: NSEventTrackingRunLoopMode
+                      dequeue: YES];
+    if (theEvent)
+      {
+      switch ([theEvent type])
+        {
+      case NSEventTypeRotate:
+        rotation = [theEvent rotation];
+        interactor->SetRotateGestureAngle( rotation );
+        interactor->InvokeEvent(vtkCommand::RotateGestureEvent, NULL);
+        break;
+      case NSEventTypeEndGesture:
+        keepOn = NO;
+      default:
+        break;
+        }
+      }
+    else
+      {
+      keepOn = NO;
+      }
+    }
+  while (keepOn);
+
+}
+
+//----------------------------------------------------------------------------
+// Overridden (from NSResponder).
+- (void)swipeWithEvent:(NSEvent *)theEvent{
+  vtkCocoaRenderWindowInteractor *interactor = [self getInteractor];
+  if (!interactor)
+    {
+    return;
+    }
+
+  vtkCocoaRenderWindow* renWin =
+    vtkCocoaRenderWindow::SafeDownCast([self getVTKRenderWindow]);
+
+  if (!renWin)
+    {
+    return;
+    }
+
+  CGFloat x = [theEvent deltaX];
+  CGFloat y = [theEvent deltaY];
+
+  if (x!=0) {
+    if (x>0)
+      interactor->SetSwipeGestureDirection(0);
+    else
+      interactor->SetSwipeGestureDirection(1);
+  }
+  if (y!=0) {
+    if (y>0)
+      interactor->SetSwipeGestureDirection(2);
+    else
+      interactor->SetSwipeGestureDirection(3);
+  }
+  interactor->InvokeEvent(vtkCommand::SwipeGestureEvent, 0);
+}
 @end

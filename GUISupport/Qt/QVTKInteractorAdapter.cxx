@@ -224,11 +224,11 @@ bool QVTKInteractorAdapter::ProcessEvent(QEvent* e, vtkRenderWindowInteractor* i
 
     // invoke vtk event
     // if delta is positive, it is a forward wheel event
-    if(e2->delta() > 0)
+    if(e2->delta() > 0.1)
       {
       iren->InvokeEvent(vtkCommand::MouseWheelForwardEvent, e2);
       }
-    else
+    else if (e2->delta() < -0.1)
       {
       iren->InvokeEvent(vtkCommand::MouseWheelBackwardEvent, e2);
       }

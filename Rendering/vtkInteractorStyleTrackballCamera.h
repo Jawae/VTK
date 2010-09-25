@@ -53,6 +53,11 @@ public:
   virtual void OnRightButtonUp();
   virtual void OnMouseWheelForward();
   virtual void OnMouseWheelBackward();
+  virtual void OnGestureStart();
+  virtual void OnGestureEnd();
+  virtual void OnPinchGesture();
+  virtual void OnRotateGesture();
+  virtual void OnSwipeGesture();
 
   // These methods for the different interactions in different modes
   // are overridden in subclasses to perform the correct motion. Since

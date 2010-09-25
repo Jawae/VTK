@@ -228,6 +228,93 @@ void vtkInteractorStyleTrackballCamera::OnMouseWheelBackward()
 }
 
 //----------------------------------------------------------------------------
+void vtkInteractorStyleTrackballCamera::OnGestureStart()
+{
+  this->StartInteraction();
+}
+
+//----------------------------------------------------------------------------
+void vtkInteractorStyleTrackballCamera::OnGestureEnd()
+{
+  this->EndInteraction();
+  this->Interactor->Render();
+}
+
+//----------------------------------------------------------------------------
+void vtkInteractorStyleTrackballCamera::OnPinchGesture()
+{
+  if (this->CurrentRenderer == NULL)
+    {
+    return;
+    }
+
+  this->GrabFocus(this->EventCallbackCommand);
+  double factor = this->Interactor->GetPinchGestureFactor();
+  this->Dolly(factor);
+  this->ReleaseFocus();
+}
+
+//----------------------------------------------------------------------------
+void vtkInteractorStyleTrackballCamera::OnRotateGesture()
+{
+ if ( this->CurrentRenderer == NULL )
+    {
+    return;
+    }
+
+  vtkCamera *camera = this->CurrentRenderer->GetActiveCamera();
+  camera->Roll( this->Interactor->GetRotateGestureAngle() );
+  camera->OrthogonalizeViewUp();
+
+  this->Interactor->Render();
+}
+
+//----------------------------------------------------------------------------
+void vtkInteractorStyleTrackballCamera::OnSwipeGesture()
+{
+ if ( this->CurrentRenderer == NULL )
+    {
+    return;
+    }
+
+  vtkCamera *camera = this->CurrentRenderer->GetActiveCamera();
+  int swipeDirection = this->Interactor->GetSwipeGestureDirection();
+
+  if (swipeDirection==0) {
+  for (int i=0; i<45; i++) {
+      camera->Azimuth( -2.0 );
+      camera->OrthogonalizeViewUp();
+      this->CurrentRenderer->ResetCameraClippingRange();
+      this->Interactor->Render();
+      }
+    }
+  if (swipeDirection==1) {
+    for (int i=0; i<45; i++) {
+      camera->Azimuth( 2.0 );
+      camera->OrthogonalizeViewUp();
+      this->CurrentRenderer->ResetCameraClippingRange();
+      this->Interactor->Render();
+      }
+    }
+  if (swipeDirection==2) {
+    for (int i=0; i<45; i++) {
+      camera->Elevation( -2.0 );
+      camera->OrthogonalizeViewUp();
+      this->CurrentRenderer->ResetCameraClippingRange();
+      this->Interactor->Render();
+      }
+    }
+  if (swipeDirection==3) {
+    for (int i=0; i<45; i++) {
+      camera->Elevation( 2.0 );
+      camera->OrthogonalizeViewUp();
+      this->CurrentRenderer->ResetCameraClippingRange();
+      this->Interactor->Render();
+      }
+    }
+}
+
+//----------------------------------------------------------------------------
 void vtkInteractorStyleTrackballCamera::Rotate()
 {
   if (this->CurrentRenderer == NULL)
@@ -289,7 +376,7 @@ void vtkInteractorStyleTrackballCamera::Spin()
   vtkCamera *camera = this->CurrentRenderer->GetActiveCamera();
   camera->Roll( newAngle - oldAngle );
   camera->OrthogonalizeViewUp();
-      
+
   rwi->Render();
 }
 

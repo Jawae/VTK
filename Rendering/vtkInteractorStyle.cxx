@@ -219,6 +219,26 @@ void vtkInteractorStyle::SetInteractor(vtkRenderWindowInteractor *i)
                    this->EventCallbackCommand, 
                    this->Priority);
 
+    i->AddObserver(vtkCommand::GestureStartEvent,
+                   this->EventCallbackCommand,
+                   this->Priority);
+
+    i->AddObserver(vtkCommand::GestureEndEvent,
+                   this->EventCallbackCommand,
+                   this->Priority);
+
+    i->AddObserver(vtkCommand::PinchGestureEvent,
+                   this->EventCallbackCommand,
+                   this->Priority);
+
+    i->AddObserver(vtkCommand::RotateGestureEvent,
+                   this->EventCallbackCommand,
+                   this->Priority);
+
+    i->AddObserver(vtkCommand::SwipeGestureEvent,
+                   this->EventCallbackCommand,
+                   this->Priority);
+
     i->AddObserver(vtkCommand::ExposeEvent, 
                    this->EventCallbackCommand, 
                    this->Priority);
@@ -1102,6 +1122,67 @@ void vtkInteractorStyle::ProcessEvents(vtkObject* vtkNotUsed(object),
       else 
         {
         self->OnMouseWheelBackward();
+        }
+      break;
+
+    case vtkCommand::GestureStartEvent:
+      if (self->HandleObservers &&
+          self->HasObserver(vtkCommand::GestureStartEvent))
+        {
+        self->InvokeEvent(vtkCommand::GestureStartEvent,NULL);
+        }
+      else
+        {
+        self->OnGestureStart();
+        }
+      break;
+
+    case vtkCommand::GestureEndEvent:
+      if (self->HandleObservers &&
+          self->HasObserver(vtkCommand::GestureEndEvent))
+        {
+        self->InvokeEvent(vtkCommand::GestureEndEvent,NULL);
+        }
+      else
+        {
+        self->OnGestureEnd();
+        }
+      break;
+
+
+    case vtkCommand::PinchGestureEvent:
+      if (self->HandleObservers &&
+          self->HasObserver(vtkCommand::PinchGestureEvent))
+        {
+        self->InvokeEvent(vtkCommand::PinchGestureEvent,NULL);
+        }
+      else
+        {
+        self->OnPinchGesture();
+        }
+      break;
+
+    case vtkCommand::RotateGestureEvent:
+      if (self->HandleObservers &&
+          self->HasObserver(vtkCommand::RotateGestureEvent))
+        {
+        self->InvokeEvent(vtkCommand::RotateGestureEvent,NULL);
+        }
+      else
+        {
+        self->OnRotateGesture();
+        }
+      break;
+
+    case vtkCommand::SwipeGestureEvent:
+      if (self->HandleObservers &&
+          self->HasObserver(vtkCommand::SwipeGestureEvent))
+        {
+        self->InvokeEvent(vtkCommand::SwipeGestureEvent,NULL);
+        }
+      else
+        {
+        self->OnSwipeGesture();
         }
       break;
 

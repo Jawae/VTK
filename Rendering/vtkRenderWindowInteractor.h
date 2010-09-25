@@ -323,6 +323,12 @@ public:
   vtkGetMacro(RepeatCount, int);
   vtkSetStringMacro(KeySym);
   vtkGetStringMacro(KeySym);
+  vtkSetMacro(PinchGestureFactor, double);
+  vtkGetMacro(PinchGestureFactor, double);
+  vtkSetMacro(RotateGestureAngle, double);
+  vtkGetMacro(RotateGestureAngle, double);
+  vtkSetMacro(SwipeGestureDirection, int);
+  vtkGetMacro(SwipeGestureDirection, int);
 
   // Description:
   // Set all the event information in one call.
@@ -483,6 +489,9 @@ protected:
   int   TimerEventType;
   int   TimerEventDuration;
   int   TimerEventPlatformId;
+  double PinchGestureFactor;
+  double RotateGestureAngle;
+  int    SwipeGestureDirection;
 
   // control the fly to
   int NumberOfFlyFrames;

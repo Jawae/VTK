@@ -51,6 +51,8 @@ class vtkImageData;
 class vtkTDxDevice;
 #endif
 
+#include <QGestureEvent>
+
 #if defined(Q_WS_MAC)
 # if defined(QT_MAC_USE_COCOA) && defined(VTK_USE_COCOA)
 #  define QVTK_USE_COCOA
@@ -230,6 +232,8 @@ protected:
   virtual void dragLeaveEvent(QDragLeaveEvent*);
   // overload drop event
   virtual void dropEvent(QDropEvent*);
+  // handle gesture event
+  virtual bool gestureEvent(QGestureEvent*);
 
   // the vtk render window
   vtkRenderWindow* mRenWin;

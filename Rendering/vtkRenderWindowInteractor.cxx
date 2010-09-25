@@ -102,6 +102,9 @@ vtkRenderWindowInteractor::vtkRenderWindowInteractor()
   this->TimerEventType = 0;
   this->TimerEventDuration = 0;
   this->TimerEventPlatformId = 0;
+  this->PinchGestureFactor = 1.0;
+  this->RotateGestureAngle = 0.0;
+  this->SwipeGestureDirection = 0;
 
   this->TimerMap = new vtkTimerIdMap;
   this->TimerDuration = 10;
