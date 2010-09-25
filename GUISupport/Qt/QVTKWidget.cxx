@@ -47,9 +47,11 @@
 #include "qx11info_x11.h"
 #endif
 
+#if QT_VERSION >= 0x040600
 #include "QPinchGesture"
 #include "QPanGesture"
 #include "QTapGesture"
+#endif
 
 #include "vtkstd/map"
 #include "vtkInteractorStyleTrackballCamera.h"
@@ -112,11 +114,13 @@ QVTKWidget::QVTKWidget(QWidget* p, Qt::WFlags f)
 
   mIrenAdapter = new QVTKInteractorAdapter(this);
 
+#if QT_VERSION >= 0x040600
   this->grabGesture(Qt::PinchGesture);
   this->grabGesture(Qt::SwipeGesture);
   this->grabGesture(Qt::PanGesture);
   this->grabGesture(Qt::TapGesture);
   this->grabGesture(Qt::TapAndHoldGesture);
+#endif
 }
 
 /*! destructor */
@@ -416,8 +420,12 @@ bool QVTKWidget::event(QEvent* e)
     return ke->isAccepted();
     }
 
-    if (e->type() == QEvent::Gesture)
-      return gestureEvent(static_cast<QGestureEvent *>(e));
+#if QT_VERSION >= 0x040600
+  if(e->type() == QEvent::Gesture)
+    {
+    return gestureEvent(static_cast<QGestureEvent *>(e));
+    }
+#endif
 
   return QWidget::event(e);
 }
@@ -665,6 +673,7 @@ void QVTKWidget::dropEvent(QDropEvent* e)
     }
 }
 
+#if QT_VERSION >= 0x040600
 bool QVTKWidget::gestureEvent(QGestureEvent* e)
 {
   vtkRenderWindowInteractor* iren = NULL;
@@ -678,8 +687,12 @@ bool QVTKWidget::gestureEvent(QGestureEvent* e)
     return false;
     }
 
-  //if (e->gesture(Qt::TapAndHoldGesture)) {
-  if (e->gesture(Qt::PanGesture)) {
+  //if (e->gesture(Qt::TapAndHoldGesture))
+  //  {
+  //  }
+
+  if (e->gesture(Qt::PanGesture))
+    {
     QPanGesture *tap = static_cast<QPanGesture*> (e->gesture(Qt::PanGesture));
 
     if (tap->state()==Qt::GestureStarted)
@@ -688,11 +701,9 @@ bool QVTKWidget::gestureEvent(QGestureEvent* e)
       }
 
     // give interactor the event information
-    iren->SetEventInformation(iren->GetLastEventPosition()[0], iren->GetLastEventPosition()[1],
-                                0,
-                                1,
-                                0,
-                                0);
+    iren->SetEventInformation(iren->GetLastEventPosition()[0],
+                              iren->GetLastEventPosition()[1],
+                              0, 1, 0, 0);
     iren->InvokeEvent(vtkCommand::MiddleButtonPressEvent, e);
 
     if (tap->state()==Qt::GestureFinished)
@@ -705,23 +716,23 @@ bool QVTKWidget::gestureEvent(QGestureEvent* e)
 
   if (QGesture *pinch = e->gesture(Qt::PinchGesture))
     {
-      QPinchGesture *ppinch = static_cast<QPinchGesture*> (pinch);
+    QPinchGesture *ppinch = static_cast<QPinchGesture*> (pinch);
 
-      if (ppinch->state()==Qt::GestureStarted)
-        {
-        iren->InvokeEvent(vtkCommand::GestureStartEvent, e);
-        }
+    if (ppinch->state()==Qt::GestureStarted)
+      {
+      iren->InvokeEvent(vtkCommand::GestureStartEvent, e);
+      }
 
-      iren->SetPinchGestureFactor( ppinch->scaleFactor()/ppinch->lastScaleFactor() );
-      iren->InvokeEvent(vtkCommand::PinchGestureEvent);
+    iren->SetPinchGestureFactor( ppinch->scaleFactor()/ppinch->lastScaleFactor() );
+    iren->InvokeEvent(vtkCommand::PinchGestureEvent);
 
-      iren->SetRotateGestureAngle( -1.0*(ppinch->rotationAngle()-ppinch->lastRotationAngle()) );
-      iren->InvokeEvent(vtkCommand::RotateGestureEvent);
+    iren->SetRotateGestureAngle( -1.0*(ppinch->rotationAngle()-ppinch->lastRotationAngle()) );
+    iren->InvokeEvent(vtkCommand::RotateGestureEvent);
 
-      if (ppinch->state()==Qt::GestureFinished)
-        {
-        iren->InvokeEvent(vtkCommand::GestureEndEvent, e);
-        }
+    if (ppinch->state()==Qt::GestureFinished)
+      {
+      iren->InvokeEvent(vtkCommand::GestureEndEvent, e);
+      }
     }
 
   if (QGesture *pinch = e->gesture(Qt::SwipeGesture))
@@ -734,15 +745,23 @@ bool QVTKWidget::gestureEvent(QGestureEvent* e)
 
     if (swipe->state()==Qt::GestureFinished)
       {
-        if (swipe->horizontalDirection()==QSwipeGesture::Right)
-          iren->SetSwipeGestureDirection( 0 );
-        if (swipe->horizontalDirection()==QSwipeGesture::Left)
-          iren->SetSwipeGestureDirection( 1 );
-        if (swipe->verticalDirection()==QSwipeGesture::Up)
-          iren->SetSwipeGestureDirection( 2 );
-        if (swipe->verticalDirection()==QSwipeGesture::Down)
-          iren->SetSwipeGestureDirection( 3 );
-        iren->InvokeEvent(vtkCommand::SwipeGestureEvent);
+      if (swipe->horizontalDirection()==QSwipeGesture::Right)
+        {
+        iren->SetSwipeGestureDirection( 0 );
+        }
+      if (swipe->horizontalDirection()==QSwipeGesture::Left)
+        {
+        iren->SetSwipeGestureDirection( 1 );
+        }
+      if (swipe->verticalDirection()==QSwipeGesture::Up)
+        {
+        iren->SetSwipeGestureDirection( 2 );
+        }
+      if (swipe->verticalDirection()==QSwipeGesture::Down)
+        {
+        iren->SetSwipeGestureDirection( 3 );
+        }
+      iren->InvokeEvent(vtkCommand::SwipeGestureEvent);
       }
 
     if (swipe->state()==Qt::GestureFinished)
@@ -750,8 +769,10 @@ bool QVTKWidget::gestureEvent(QGestureEvent* e)
       iren->InvokeEvent(vtkCommand::GestureEndEvent, e);
       }
     }
+
   return true;
 }
+#endif // QT_VERSION >= 0x040600
 
 void QVTKWidget::showEvent(QShowEvent* e)
 {

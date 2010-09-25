@@ -15,10 +15,8 @@
 
 #import "vtkCocoaGLView.h"
 #import "vtkCocoaRenderWindow.h"
-#import "vtkRenderer.h"
 #import "vtkCocoaRenderWindowInteractor.h"
 #import "vtkCommand.h"
-#include "vtkMath.h"
 
 
 @implementation vtkCocoaGLView
@@ -651,14 +649,14 @@ static const char *vtkMacKeyCodeToKeySymTable[128] = {
 
       switch ([theEvent type])
         {
-      case NSLeftMouseDragged:
-        interactor->InvokeEvent(vtkCommand::MouseMoveEvent, NULL);
-        break;
-      case NSLeftMouseUp:
-        interactor->InvokeEvent(vtkCommand::LeftButtonReleaseEvent, NULL);
-        keepOn = NO;
-      default:
-        break;
+        case NSLeftMouseDragged:
+          interactor->InvokeEvent(vtkCommand::MouseMoveEvent, NULL);
+          break;
+        case NSLeftMouseUp:
+          interactor->InvokeEvent(vtkCommand::LeftButtonReleaseEvent, NULL);
+          keepOn = NO;
+        default:
+          break;
         }
       }
     else
@@ -732,14 +730,14 @@ static const char *vtkMacKeyCodeToKeySymTable[128] = {
 
       switch ([theEvent type])
         {
-      case NSRightMouseDragged:
-        interactor->InvokeEvent(vtkCommand::MouseMoveEvent, NULL);
-        break;
-      case NSRightMouseUp:
-        interactor->InvokeEvent(vtkCommand::RightButtonReleaseEvent, NULL);
-        keepOn = NO;
-      default:
-        break;
+        case NSRightMouseDragged:
+          interactor->InvokeEvent(vtkCommand::MouseMoveEvent, NULL);
+          break;
+        case NSRightMouseUp:
+          interactor->InvokeEvent(vtkCommand::RightButtonReleaseEvent, NULL);
+          keepOn = NO;
+        default:
+          break;
         }
       }
     else
@@ -831,6 +829,7 @@ static const char *vtkMacKeyCodeToKeySymTable[128] = {
   while (keepOn);
 }
 
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
 //----------------------------------------------------------------------------
 // Overridden (from NSResponder).
 - (void)beginGestureWithEvent:(NSEvent *)theEvent{
@@ -840,7 +839,7 @@ static const char *vtkMacKeyCodeToKeySymTable[128] = {
     return;
     }
 
-    interactor->InvokeEvent(vtkCommand::GestureStartEvent, NULL);
+  interactor->InvokeEvent(vtkCommand::GestureStartEvent, NULL);
 }
 
 //----------------------------------------------------------------------------
@@ -852,7 +851,7 @@ static const char *vtkMacKeyCodeToKeySymTable[128] = {
     return;
     }
 
-    interactor->InvokeEvent(vtkCommand::GestureEndEvent, NULL);
+  interactor->InvokeEvent(vtkCommand::GestureEndEvent, NULL);
 }
 
 //----------------------------------------------------------------------------
@@ -998,18 +997,29 @@ static const char *vtkMacKeyCodeToKeySymTable[128] = {
   CGFloat x = [theEvent deltaX];
   CGFloat y = [theEvent deltaY];
 
-  if (x!=0) {
+  if (x!=0)
+    {
     if (x>0)
+      {
       interactor->SetSwipeGestureDirection(0);
+      }
     else
+      {
       interactor->SetSwipeGestureDirection(1);
-  }
-  if (y!=0) {
+      }
+    }
+  if (y!=0)
+    {
     if (y>0)
+      {
       interactor->SetSwipeGestureDirection(2);
+      }
     else
+      {
       interactor->SetSwipeGestureDirection(3);
-  }
+      }
+    }
   interactor->InvokeEvent(vtkCommand::SwipeGestureEvent, 0);
 }
+#endif // MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
 @end

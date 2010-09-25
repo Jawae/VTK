@@ -301,11 +301,6 @@ public:
     MouseMoveEvent,
     MouseWheelForwardEvent,
     MouseWheelBackwardEvent,
-    GestureStartEvent,
-    GestureEndEvent,
-    PinchGestureEvent,
-    RotateGestureEvent,
-    SwipeGestureEvent,
     ActiveCameraEvent,
     CreateCameraEvent,
     ResetCameraEvent,
@@ -368,6 +363,11 @@ public:
     WindowMakeCurrentEvent,
     WindowIsCurrentEvent,
     WindowFrameEvent,
+    GestureStartEvent,
+    GestureEndEvent,
+    PinchGestureEvent,
+    RotateGestureEvent,
+    SwipeGestureEvent,
     UserEvent = 1000
   };
 //ETX

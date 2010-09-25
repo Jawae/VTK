@@ -228,7 +228,7 @@ bool QVTKInteractorAdapter::ProcessEvent(QEvent* e, vtkRenderWindowInteractor* i
       {
       iren->InvokeEvent(vtkCommand::MouseWheelForwardEvent, e2);
       }
-    else if (e2->delta() < -0.1)
+    else if(e2->delta() < -0.1)
       {
       iren->InvokeEvent(vtkCommand::MouseWheelBackwardEvent, e2);
       }

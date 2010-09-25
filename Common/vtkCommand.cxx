@@ -48,11 +48,6 @@ static const char *vtkCommandEventStrings[] = {
   "MouseMoveEvent",
   "MouseWheelForwardEvent",
   "MouseWheelBackwardEvent",
-  "GestureStartEvent",
-  "GestureEndEvent",
-  "PinchGestureEvent",
-  "RotateGestureEvent",
-  "SwipeGestureEvent",
   "ActiveCameraEvent",
   "CreateCameraEvent",
   "ResetCameraEvent",
@@ -115,6 +110,11 @@ static const char *vtkCommandEventStrings[] = {
   "WindowMakeCurrentEvent",
   "WindowIsCurrentEvent",
   "WindowFrameEvent",
+  "GestureStartEvent",
+  "GestureEndEvent",
+  "PinchGestureEvent",
+  "RotateGestureEvent",
+  "SwipeGestureEvent",
   NULL
 };
 
