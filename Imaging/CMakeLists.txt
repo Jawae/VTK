@@ -45,6 +45,7 @@ vtkImageExport.cxx
 vtkImageExtractComponents.cxx
 vtkImageFFT.cxx
 vtkImageFlip.cxx
+vtkImageFloodFill.cxx
 vtkImageFourierCenter.cxx
 vtkImageFourierFilter.cxx
 vtkImageGaussianSmooth.cxx

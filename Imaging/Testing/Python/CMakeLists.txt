@@ -46,6 +46,7 @@ IF (VTK_USE_RENDERING AND VTK_USE_DISPLAY)
         TestEuclideanDistance
         TestEuclideanDistanceCached
         TestEuclideanToPolar
+        #TestFloodFill -- uses lists in lists etc...
         TestFFTCorrelation
         TestGradientMagnitude
         TestGradientMagnitude2
