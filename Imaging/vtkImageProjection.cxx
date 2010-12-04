@@ -16,7 +16,11 @@
 #include "vtkImageProjection.h"
 
 #include "vtkImageData.h"
+#include "vtkStreamingDemandDrivenPipeline.h"
 #include "vtkObjectFactory.h"
+#include "vtkInformationVector.h"
+#include "vtkInformation.h"
+#include "vtkMath.h"
 
 #include <math.h>
 
@@ -39,21 +43,29 @@ vtkImageProjection::~vtkImageProjection()
 }
 
 //----------------------------------------------------------------------------
-void vtkImageProjection::ExecuteInformation(vtkImageData *input,
-                                            vtkImageData *output)
+int vtkImageProjection::RequestInformation(
+  vtkInformation *, vtkInformationVector **inputVector,
+  vtkInformationVector *outputVector)
 {
   int extent[6];
   int range[2];
   double origin[3];
+  double spacing[3];
   double sliceSpacing;
   int dimIndex;
   int scalarType;
+
+  vtkInformation *outInfo = outputVector->GetInformationObject(0);
+  vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
+
+  inInfo->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), extent);
+  inInfo->Get(vtkDataObject::SPACING(), spacing);
+  inInfo->Get(vtkDataObject::ORIGIN(), origin);
 
   // get the direction along which to sum slices
   dimIndex = this->GetSliceDirection();
 
   // clamp the range to the whole extent
-  input->GetWholeExtent(extent);
   this->GetSliceRange(range);
   if (range[0] < extent[2*dimIndex])
     {
@@ -64,13 +76,8 @@ void vtkImageProjection::ExecuteInformation(vtkImageData *input,
     range[1] = extent[2*dimIndex+1];
     }
 
-  // this avoids confusion about whether origin is double or float
-  origin[0] = input->GetOrigin()[0];
-  origin[1] = input->GetOrigin()[1];
-  origin[2] = input->GetOrigin()[2];
-
   // set new origin to be in the center of the stack of slices
-  sliceSpacing = input->GetSpacing()[dimIndex];
+  sliceSpacing = spacing[dimIndex];
   origin[dimIndex] = (origin[dimIndex] +
                       0.5*sliceSpacing*(range[0] + range[1]));
 
@@ -89,28 +96,40 @@ void vtkImageProjection::ExecuteInformation(vtkImageData *input,
 
   // set the output scalar type
   scalarType = this->GetOutputScalarType();
-  if (scalarType == 0)
-    {
-    scalarType = input->GetScalarType();
-    }
 
   // set the output information
-  output->SetWholeExtent(extent);
-  output->SetSpacing(input->GetSpacing());
-  output->SetOrigin(origin[0], origin[1], origin[2]);
-  output->SetScalarType(scalarType);
-  output->SetNumberOfScalarComponents(input->GetNumberOfScalarComponents());
+  outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),
+    extent, 6);
+  outInfo->Set(vtkDataObject::SPACING(), spacing, 3);
+  outInfo->Set(vtkDataObject::ORIGIN(), origin, 3);
+
+  // if requested, change the type to float or double
+  if (scalarType == VTK_FLOAT || scalarType == VTK_DOUBLE)
+    {
+    vtkDataObject::SetPointDataActiveScalarInfo(outInfo, scalarType, -1);
+    }
+
+  return 1;
 }
 
 //----------------------------------------------------------------------------
-void vtkImageProjection::ComputeInputUpdateExtent(int inExt[6],
-                                                  int outExt[6])
+int vtkImageProjection::RequestUpdateExtent(
+  vtkInformation *, vtkInformationVector **inputVector,
+  vtkInformationVector *outputVector)
 {
+  int outExt[6];
+  int inExt[6];
   int extent[6];
   int range[2];
   int dimIndex;
 
-  // initialize intput extent to output extent
+  vtkInformation *outInfo = outputVector->GetInformationObject(0);
+  vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
+
+  outInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), outExt);
+  inInfo->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), extent);
+
+  // initialize input extent to output extent
   inExt[0] = outExt[0];
   inExt[1] = outExt[1];
   inExt[2] = outExt[2];
@@ -122,7 +141,6 @@ void vtkImageProjection::ComputeInputUpdateExtent(int inExt[6],
   dimIndex = this->GetSliceDirection();
 
   // clamp the range to the whole extent
-  this->GetInput()->GetWholeExtent(extent);
   this->GetSliceRange(range);
   if (range[0] < extent[2*dimIndex])
     {
@@ -136,20 +154,10 @@ void vtkImageProjection::ComputeInputUpdateExtent(int inExt[6],
   // input range is the output range plus the specified slice range
   inExt[2*dimIndex] += range[0];
   inExt[2*dimIndex+1] += range[1];
-}
 
-//----------------------------------------------------------------------------
-inline int vtkProjectionRound(double x)
-{
-#if defined mips || defined sparc || defined __ppc__
-  return (int)((unsigned int)(x + 2147483648.5) - 2147483648U);
-#elif defined i386 || defined _M_IX86
-  unsigned int hilo[2];
-  *((double *)hilo) = x + 103079215104.5;  // (2**(52-16))*1.5
-  return (int)((hilo[1]<<16)|(hilo[0]>>16));
-#else
-  return (int)(floor(x+0.5));
-#endif
+  inInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), inExt, 6);
+
+  return 1;
 }
 
 //----------------------------------------------------------------------------
@@ -157,59 +165,59 @@ inline int vtkProjectionRound(double x)
 
 inline void vtkProjectionRound(double val, signed char& rnd)
 {
-  rnd = vtkProjectionRound(val);
+  rnd = static_cast<signed char>(vtkMath::Floor(val + 0.5));
 }
 
 inline void vtkProjectionRound(double val, char& rnd)
 {
-  rnd = vtkProjectionRound(val);
+  rnd = static_cast<char>(vtkMath::Floor(val + 0.5));
 }
 
 inline void vtkProjectionRound(double val, unsigned char& rnd)
 {
-  rnd = vtkProjectionRound(val);
+  rnd = static_cast<unsigned char>(vtkMath::Floor(val + 0.5));
 }
 
 inline void vtkProjectionRound(double val, short& rnd)
 {
-  rnd = vtkProjectionRound(val);
+  rnd = static_cast<short>(vtkMath::Floor(val + 0.5));
 }
 
 inline void vtkProjectionRound(double val, unsigned short& rnd)
 {
-  rnd = vtkProjectionRound(val);
+  rnd = static_cast<unsigned short>(vtkMath::Floor(val + 0.5));
 }
 
 inline void vtkProjectionRound(double val, int& rnd)
 {
-  rnd = vtkProjectionRound(val);
+  rnd = static_cast<int>(vtkMath::Floor(val + 0.5));
 }
 
 inline void vtkProjectionRound(double val, unsigned int& rnd)
 {
-  rnd = vtkProjectionRound(val);
+  rnd = static_cast<unsigned int>(floor(val + 0.5));
 }
 
 inline void vtkProjectionRound(double val, long& rnd)
 {
-  rnd = vtkProjectionRound(val);
+  rnd = static_cast<unsigned int>(floor(val + 0.5));
 }
 
 inline void vtkProjectionRound(double val, unsigned long& rnd)
 {
-  rnd = vtkProjectionRound(val);
+  rnd = static_cast<unsigned int>(floor(val + 0.5));
 }
 
 #ifdef VTK_LONG_LONG_MIN
 inline void vtkProjectionRound(double val, long long& rnd)
 {
-  rnd = (long long)(floor(val + 0.5));
+  rnd = static_cast<long long>(floor(val + 0.5));
 }
 #else /* VTK_LONG_LONG_MIN */
 #ifdef VTK___INT64_MIN
 inline void vtkProjectionRound(double val, __int64& rnd)
 {
-  rnd = (__int64)(floor(val + 0.5));
+  rnd = static_cast<__int64>(floor(val + 0.5));
 }
 #endif /* VTK___INT64_MIN */
 #endif /* VTK_LONG_LONG_MIN */
@@ -217,25 +225,25 @@ inline void vtkProjectionRound(double val, __int64& rnd)
 #ifdef VTK_UNSIGNED_LONG_LONG_MIN
 inline void vtkProjectionRound(double val, unsigned long long& rnd)
 {
-  rnd = (unsigned long long)(floor(val + 0.5));
+  rnd = static_cast<unsigned long long>(floor(val + 0.5));
 }
 #else /* VTK_UNSIGNED_LONG_LONG_MIN */
 #ifdef VTK_UNSIGNED__INT64_MIN
 inline void vtkProjectionRound(double val, unsigned __int64& clamp)
 {
-  rnd = (unsigned __int64)(floor(rnd + 0.5));
+  rnd = static_cast<unsigned __int64>(floor(rnd + 0.5));
 }
 #endif /* VTK_UNSIGNED__INT64_MIN */
 #endif /* VTK_UNSIGNED_LONG_LONG_MIN */
 
 inline void vtkProjectionRound(double val, float& rnd)
 {
-  rnd = val;
+  rnd = static_cast<float>(val);
 }
 
 inline void vtkProjectionRound(double val, double& rnd)
 {
-  rnd = val;
+  rnd = static_cast<double>(val);
 }
 
 //----------------------------------------------------------------------------
@@ -243,17 +251,17 @@ inline void vtkProjectionRound(double val, double& rnd)
 
 inline void vtkProjectionClamp(double val, signed char& clamp)
 {
-  if (val >= -128)
+  if (val >= VTK_SIGNED_CHAR_MIN)
     {
-    if (val <= 127)
+    if (val <= VTK_SIGNED_CHAR_MAX)
       {
-      clamp = vtkProjectionRound(val);
+      vtkProjectionRound(val, clamp);
       return;
       }
-    clamp = 127;
+    clamp = VTK_SIGNED_CHAR_MAX;
     return;
     }
-  clamp = -128;
+  clamp = VTK_SIGNED_CHAR_MIN;
   return;
 }
 
@@ -263,7 +271,7 @@ inline void vtkProjectionClamp(double val, char& clamp)
     {
     if (val <= VTK_CHAR_MAX)
       {
-      clamp = vtkProjectionRound(val);
+      vtkProjectionRound(val, clamp);
       return;
       }
     clamp = VTK_CHAR_MAX;
@@ -279,7 +287,7 @@ inline void vtkProjectionClamp(double val, unsigned char& clamp)
     {
     if (val <= VTK_UNSIGNED_CHAR_MAX)
       {
-      clamp = vtkProjectionRound(val);
+      vtkProjectionRound(val, clamp);
       return;
       }
     clamp = VTK_UNSIGNED_CHAR_MAX;
@@ -295,7 +303,7 @@ inline void vtkProjectionClamp(double val, short& clamp)
     {
     if (val <= VTK_SHORT_MAX)
       {
-      clamp = vtkProjectionRound(val);
+      vtkProjectionRound(val, clamp);
       return;
       }
     clamp = VTK_SHORT_MAX;
@@ -311,7 +319,7 @@ inline void vtkProjectionClamp(double val, unsigned short& clamp)
     {
     if (val <= VTK_UNSIGNED_SHORT_MAX)
       {
-      clamp = vtkProjectionRound(val);
+      vtkProjectionRound(val, clamp);
       return;
       }
     clamp = VTK_UNSIGNED_SHORT_MAX;
@@ -327,7 +335,7 @@ inline void vtkProjectionClamp(double val, int& clamp)
     {
     if (val <= VTK_INT_MAX)
       {
-      clamp = vtkProjectionRound(val);
+      vtkProjectionRound(val, clamp);
       return;
       }
     clamp = VTK_INT_MAX;
@@ -343,7 +351,7 @@ inline void vtkProjectionClamp(double val, unsigned int& clamp)
     {
     if (val <= VTK_UNSIGNED_INT_MAX)
       {
-      clamp = vtkProjectionRound(val);
+      vtkProjectionRound(val, clamp);
       return;
       }
     clamp = VTK_UNSIGNED_INT_MAX;
@@ -359,7 +367,7 @@ inline void vtkProjectionClamp(double val, long& clamp)
     {
     if (val <= VTK_LONG_MAX)
       {
-      clamp = vtkProjectionRound(val);
+      vtkProjectionRound(val, clamp);
       return;
       }
     clamp = VTK_LONG_MAX;
@@ -375,7 +383,7 @@ inline void vtkProjectionClamp(double val, unsigned long& clamp)
     {
     if (val <= VTK_UNSIGNED_LONG_MAX)
       {
-      clamp = vtkProjectionRound(val);
+      vtkProjectionRound(val, clamp);
       return;
       }
     clamp = VTK_UNSIGNED_LONG_MAX;
@@ -392,7 +400,7 @@ inline void vtkProjectionClamp(double val, long long& clamp)
     {
     if (val <= VTK_LONG_LONG_MAX)
       {
-      clamp = (long long)(floor(val + 0.5));
+      vtkProjectionRound(val, clamp);
       return;
       }
     clamp = VTK_LONG_LONG_MAX;
@@ -410,7 +418,7 @@ inline void vtkProjectionClamp(double val, unsigned long long& clamp)
     {
     if (val <= VTK_UNSIGNED_LONG_LONG_MAX)
       {
-      clamp = (unsigned long long)(floor(val + 0.5));
+      vtkProjectionRound(val, clamp);
       return;
       }
     clamp = VTK_UNSIGNED_LONG_LONG_MAX;
@@ -430,7 +438,7 @@ inline void vtkProjectionClamp(double val, __int64& clamp)
     {
     if (val <= VTK___INT64_MAX)
       {
-      clamp = (__int64)(floor(val + 0.5));
+      vtkProjectionRound(val, clamp);
       return;
       }
     clamp = VTK___INT64_MAX;
@@ -450,7 +458,7 @@ inline void vtkProjectionClamp(double val, unsigned __int64& clamp)
     {
     if (val <= VTK_UNSIGNED__INT64_MAX)
       {
-      clamp = (unsigned __int64)(floor(val + 0.5));
+      vtkProjectionRound(val, clamp);
       return;
       }
     clamp = VTK_UNSIGNED__INT64_MAX;
@@ -678,9 +686,9 @@ void vtkImageProjectionExecute(vtkImageProjection *self,
 
 
 //----------------------------------------------------------------------------
-void vtkImageProjection::ThreadedExecute(vtkImageData *inData,
-                                         vtkImageData *outData,
-                                         int outExt[6], int id)
+void vtkImageProjection::ThreadedRequestData(vtkInformation *,
+  vtkInformationVector **inVector, vtkInformationVector *,
+  vtkImageData ***inData, vtkImageData **outData, int outExt[6], int id)
 {
   void *inPtr;
   void *outPtr;
@@ -695,7 +703,8 @@ void vtkImageProjection::ThreadedExecute(vtkImageData *inData,
   dimIndex = this->GetSliceDirection();
 
   // clamp the range to the whole extent
-  inData->GetWholeExtent(extent);
+  vtkInformation *inInfo = inVector[0]->GetInformationObject(0);
+  inInfo->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), extent);
   this->GetSliceRange(range);
   if (range[0] < extent[2*dimIndex])
     {
@@ -719,28 +728,22 @@ void vtkImageProjection::ThreadedExecute(vtkImageData *inData,
   inExt[2*dimIndex+1] += range[1];
 
   // now get the pointers for the extents
-  inPtr = inData->GetScalarPointerForExtent(inExt);
-  outPtr = outData->GetScalarPointerForExtent(outExt);
+  inPtr = inData[0][0]->GetScalarPointerForExtent(inExt);
+  outPtr = outData[0]->GetScalarPointerForExtent(outExt);
 
   // get the scalar type
-  int outScalarType = outData->GetScalarType();
-  int inScalarType = inData->GetScalarType();
+  int outScalarType = outData[0]->GetScalarType();
+  int inScalarType = inData[0][0]->GetScalarType();
 
   // and call the execute method
   if (outScalarType == inScalarType)
     {
     switch (inScalarType)
       {
-#if (VTK_MAJOR_VERSION < 5)
-      vtkTemplateMacro7(vtkImageProjectionExecute, this,
-                        inData, (VTK_TT *)(inPtr),
-                        outData, (VTK_TT *)(outPtr), outExt, id);
-#else
       vtkTemplateMacro(
         vtkImageProjectionExecute(this,
-                                  inData, (VTK_TT *)(inPtr),
-                                  outData, (VTK_TT *)(outPtr), outExt, id));
-#endif
+          inData[0][0], static_cast<VTK_TT *>(inPtr),
+          outData[0], static_cast<VTK_TT *>(outPtr), outExt, id));
       default:
         vtkErrorMacro("Execute: Unknown ScalarType");
         return;
@@ -750,16 +753,10 @@ void vtkImageProjection::ThreadedExecute(vtkImageData *inData,
     {
     switch (inScalarType)
       {
-#if (VTK_MAJOR_VERSION < 5)
-      vtkTemplateMacro7(vtkImageProjectionExecute, this,
-                        inData, (VTK_TT *)(inPtr),
-                        outData, (float *)(outPtr), outExt, id);
-#else
       vtkTemplateMacro(
         vtkImageProjectionExecute( this,
-                                   inData, (VTK_TT *)(inPtr),
-                                   outData, (float *)(outPtr), outExt, id));
-#endif
+          inData[0][0], static_cast<VTK_TT *>(inPtr),
+          outData[0], static_cast<float *>(outPtr), outExt, id));
       default:
         vtkErrorMacro("Execute: Unknown ScalarType");
         return;
@@ -769,16 +766,10 @@ void vtkImageProjection::ThreadedExecute(vtkImageData *inData,
     {
     switch (inScalarType)
       {
-#if (VTK_MAJOR_VERSION < 5)
-      vtkTemplateMacro7(vtkImageProjectionExecute, this,
-                        inData, (VTK_TT *)(inPtr),
-                        outData, (double *)(outPtr), outExt, id);
-#else
       vtkTemplateMacro(
         vtkImageProjectionExecute(this,
-                                  inData, (VTK_TT *)(inPtr),
-                                  outData, (double *)(outPtr), outExt, id));
-#endif
+          inData[0][0], static_cast<VTK_TT *>(inPtr),
+          outData[0], static_cast<double *>(outPtr), outExt, id));
       default:
         vtkErrorMacro("Execute: Unknown ScalarType");
         return;
@@ -791,6 +782,7 @@ void vtkImageProjection::ThreadedExecute(vtkImageData *inData,
     }
 }
 
+//----------------------------------------------------------------------------
 void vtkImageProjection::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os, indent);
@@ -802,4 +794,22 @@ void vtkImageProjection::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "OutputScalarType: " << this->OutputScalarType << "\n";
   os << indent << "MultiSliceOutput: "
      << (this->MultiSliceOutput ? "On\n" : "Off\n");
+}
+
+//----------------------------------------------------------------------------
+const char *vtkImageProjection::GetOperationAsString()
+{
+  switch (this->Operation)
+    {
+    case VTK_PROJECTION_AVERAGE:
+      return "Average";
+    case VTK_PROJECTION_SUM:
+      return "Sum";
+    case VTK_PROJECTION_MINIMUM:
+      return "Minimum";
+    case VTK_PROJECTION_MAXIMUM:
+      return "Maximum";
+    default:
+      return "";
+    }
 }

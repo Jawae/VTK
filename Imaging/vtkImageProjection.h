@@ -17,11 +17,15 @@
 // vtkImageProjection will combine all of the slices of an image to
 // create a single slice.  The slices can be combined with the
 // following operations: averaging, summation, minimum, maximum.
+// If you require an arbitrary angle of projection, you can use
+// vtkImageReslice to rotate the image before applying this filter.
+// .SECTION Thanks
+// Thanks to David Gobbi for contributing this class to VTK.
 
 #ifndef __vtkImageProjection_h
 #define __vtkImageProjection_h
 
-#include "vtkImageToImageFilter.h"
+#include "vtkThreadedImageAlgorithm.h"
 
 
 #define VTK_PROJECTION_AVERAGE  0
@@ -29,11 +33,11 @@
 #define VTK_PROJECTION_MINIMUM  2
 #define VTK_PROJECTION_MAXIMUM  3
 
-class VTK_IMAGING_EXPORT vtkImageProjection : public vtkImageToImageFilter
+class VTK_IMAGING_EXPORT vtkImageProjection : public vtkThreadedImageAlgorithm
 {
 public:
   static vtkImageProjection *New();
-  vtkTypeMacro(vtkImageProjection, vtkImageToImageFilter);
+  vtkTypeMacro(vtkImageProjection, vtkThreadedImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -57,7 +61,7 @@ public:
   // Description:
   // Set the operation to use when combining slices.  The choices are
   // "Average", "Sum", "Maximum", "Minimum".  The default is "Average".
-  vtkSetMacro(Operation, int);
+  vtkSetClampMacro(Operation, int, 0, 3);
   void SetOperationToAverage() {
     this->SetOperation(VTK_PROJECTION_AVERAGE); };
   void SetOperationToSum() {
@@ -96,13 +100,15 @@ protected:
   vtkImageProjection();
   ~vtkImageProjection();
 
-  void ExecuteInformation() {
-    this->vtkImageToImageFilter::ExecuteInformation(); };
-  void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
-  void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
-
-  void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,
-                       int extent[6], int id);
+  virtual int RequestInformation(vtkInformation *, vtkInformationVector **,
+                                 vtkInformationVector *);
+  virtual int RequestUpdateExtent(vtkInformation *, vtkInformationVector **,
+                                  vtkInformationVector *);
+  virtual void ThreadedRequestData(vtkInformation *request,
+                                   vtkInformationVector **inputVector,
+                                   vtkInformationVector *outputVector,
+                                   vtkImageData ***inData,
+                                   vtkImageData **outData, int ext[6], int id);
 
   vtkSetMacro(OutputScalarType, int);
 
@@ -116,23 +122,5 @@ private:
   vtkImageProjection(const vtkImageProjection&);  // Not implemented.
   void operator=(const vtkImageProjection&);  // Not implemented.
 };
-
-//----------------------------------------------------------------------------
-inline const char *vtkImageProjection::GetOperationAsString()
-{
-  switch (this->Operation)
-    {
-    case VTK_PROJECTION_AVERAGE:
-      return "Average";
-    case VTK_PROJECTION_SUM:
-      return "Sum";
-    case VTK_PROJECTION_MINIMUM:
-      return "Minimum";
-    case VTK_PROJECTION_MAXIMUM:
-      return "Maximum";
-    default:
-      return "";
-    }
-}
 
 #endif
