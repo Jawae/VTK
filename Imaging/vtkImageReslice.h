@@ -263,6 +263,35 @@ public:
   vtkGetMacro(OutputDimensionality, int);
 
   // Description:
+  // Set the desired output scalar type.  Use "Default" to use
+  // the same scalar type as the input.  The pixel values are
+  // always clamped to the limits of the type.
+  vtkSetMacro(OutputScalarType, int);
+  vtkGetMacro(OutputScalarType, int);
+  void SetOutputScalarTypeToDefault()
+    {this->SetOutputScalarType(VTK_VOID);}
+  void SetOutputScalarTypeToDouble()
+    {this->SetOutputScalarType(VTK_DOUBLE);}
+  void SetOutputScalarTypeToFloat()
+    {this->SetOutputScalarType(VTK_FLOAT);}
+  void SetOutputScalarTypeToLong()
+    {this->SetOutputScalarType(VTK_LONG);}
+  void SetOutputScalarTypeToUnsignedLong()
+    {this->SetOutputScalarType(VTK_UNSIGNED_LONG);};
+  void SetOutputScalarTypeToInt()
+    {this->SetOutputScalarType(VTK_INT);}
+  void SetOutputScalarTypeToUnsignedInt()
+    {this->SetOutputScalarType(VTK_UNSIGNED_INT);}
+  void SetOutputScalarTypeToShort()
+    {this->SetOutputScalarType(VTK_SHORT);}
+  void SetOutputScalarTypeToUnsignedShort()
+    {this->SetOutputScalarType(VTK_UNSIGNED_SHORT);}
+  void SetOutputScalarTypeToChar()
+    {this->SetOutputScalarType(VTK_CHAR);}
+  void SetOutputScalarTypeToUnsignedChar()
+    {this->SetOutputScalarType(VTK_UNSIGNED_CHAR);}
+
+  // Description:
   // When determining the modified time of the filter, 
   // this check the modified time of the transform and matrix.
   unsigned long int GetMTime();
@@ -322,6 +351,7 @@ protected:
   int ComputeOutputSpacing;
   int ComputeOutputOrigin;
   int ComputeOutputExtent;
+  int OutputScalarType;
 
   vtkMatrix4x4 *IndexMatrix;
   vtkAbstractTransform *OptimizedTransform;
