@@ -28,6 +28,7 @@
 #include "vtkOpenGLDisplayListPainter.h"
 #include "vtkOpenGLGlyph3DMapper.h"
 #include "vtkOpenGLImageActor.h"
+#include "vtkOpenGLImageMapper3D.h"
 #include "vtkOpenGLLight.h"
 #include "vtkOpenGLLightingPainter.h"
 #include "vtkOpenGLPainterDeviceAdapter.h"
@@ -82,6 +83,7 @@
 #include "vtkMesaCoincidentTopologyResolutionPainter.h"
 #include "vtkMesaDisplayListPainter.h"
 #include "vtkMesaImageActor.h"
+#include "vtkMesaImageMapper3D.h"
 #include "vtkMesaLight.h"
 #include "vtkMesaLightingPainter.h"
 #include "vtkMesaPainterDeviceAdapter.h"
@@ -311,6 +313,16 @@ vtkObject* vtkGraphicsFactory::CreateInstance(const char* vtkclassname )
         }
 #endif
       return vtkOpenGLImageActor::New();
+      }
+    if(strcmp(vtkclassname, "vtkImageMapper3D") == 0)
+      {
+#if defined(VTK_USE_MANGLED_MESA)
+      if ( vtkGraphicsFactory::UseMesaClasses )
+        {
+        return vtkMesaImageMapper3D::New();
+        }
+#endif
+      return vtkOpenGLImageMapper3D::New();
       }
     if(strcmp(vtkclassname, "vtkLight") == 0)
       {

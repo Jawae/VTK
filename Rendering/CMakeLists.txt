@@ -72,8 +72,11 @@ SET( Kit_SRCS
   vtkHardwareSelector.cxx
   vtkHardwareSelectionPolyDataPainter.cxx
   vtkHierarchicalPolyDataMapper.cxx
+  vtkImage.cxx
   vtkImageActor.cxx
   vtkImageMapper.cxx
+  vtkImageMapper3D.cxx
+  vtkImageProperty.cxx
   vtkImageViewer2.cxx
   vtkImageViewer.cxx
   vtkImagingFactory.cxx
@@ -246,6 +249,7 @@ SET( KitOpenGL_SRCS
   vtkOpenGLHardwareSupport.cxx
   vtkOpenGLImageActor.cxx
   vtkOpenGLImageMapper.cxx
+  vtkOpenGLImageMapper3D.cxx
   vtkOpenGLLight.cxx
   vtkOpenGLLightingPainter.cxx
   vtkOpenGLPainterDeviceAdapter.cxx
@@ -703,6 +707,7 @@ IF (VTK_USE_MANGLED_MESA)
                  vtkMesaDisplayListPainter.cxx
                  vtkMesaImageActor.cxx
                  vtkMesaImageMapper.cxx
+                 vtkMesaImageMapper3D.cxx
                  vtkMesaLight.cxx
                  vtkMesaLightingPainter.cxx
                  vtkMesaPainterDeviceAdapter.cxx
