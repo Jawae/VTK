@@ -542,8 +542,26 @@ void vtkOpenGLImageMapper3D::InternalLoad(
 {
   GLenum format = GL_LUMINANCE;
 
+  // Get the mtime of the property, including the lookup table
+  unsigned long propertyMTime = 0;
+  if (property)
+    {
+    propertyMTime = property->GetMTime();
+    vtkScalarsToColors *table = property->GetLookupTable();
+    if (table)
+      {
+      unsigned long mtime = table->GetMTime();
+      if (mtime > propertyMTime)
+        {
+        propertyMTime = mtime;
+        }
+      }
+    }
+
   // need to reload the texture
   if (this->GetMTime() > this->LoadTime.GetMTime() ||
+      propertyMTime > this->LoadTime.GetMTime() ||
+      this->WorldToDataMatrix->GetMTime() > this->LoadTime.GetMTime() ||
       input->GetMTime() > this->LoadTime.GetMTime() ||
       ren->GetRenderWindow() != this->RenderWindow ||
       static_cast<vtkOpenGLRenderWindow*>(ren->GetRenderWindow())
@@ -976,6 +994,7 @@ void vtkOpenGLImageMapper3D::BuildResliceInformation(vtkRenderer *ren)
   // The ResliceAxes are set to the actor matrix.
   // Potentially the ResliceAxes could also include
   // camera perspective for doing DRRs and MIPs
+
   reslice->SetResliceAxes(resliceMatrix);
   reslice->SetOutputExtent(extent);
   reslice->SetOutputSpacing(spacing);
@@ -988,15 +1007,20 @@ void vtkOpenGLImageMapper3D::Render(vtkRenderer *ren, vtkImage *prop)
 {
   vtkImageProperty *property = prop->GetProperty();
 
-  // copy the matrix
-  if (prop->GetIsIdentity())
+  // copy the matrix, but only if it has changed (we do this to
+  // preserve the modified time of the matrix)
+  double tmpmat[16] = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 };
+  if (!prop->GetIsIdentity())
     {
-    this->WorldToDataMatrix->Identity();
+    this->WorldToDataMatrix->Invert(*prop->GetMatrix()->Element, tmpmat);
     }
-  else
+  double *mat = *this->WorldToDataMatrix->Element;
+  for (int i = 0; i < 16; i++)
     {
-    this->WorldToDataMatrix->DeepCopy(prop->GetMatrix());
-    this->ResliceMatrix->Invert();
+    if (mat[i] != tmpmat[i])
+      {
+      this->WorldToDataMatrix->DeepCopy(tmpmat);
+      }
     }
 
   // set the reslice spacing/origin/extent/axes
