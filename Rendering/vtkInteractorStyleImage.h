@@ -20,7 +20,7 @@
 // vtkImageActor. Several events are overloaded from its superclass
 // vtkInteractorStyle, hence the mouse bindings are different. (The bindings
 // keep the camera's view plane normal perpendicular to the x-y plane.) In
-// summary the mouse events are as follows:
+// summary the mouse events for 2D image interaction are as follows:
 // + Left Mouse button triggers window level events
 // + CTRL Left Mouse spins the camera around its view plane normal
 // + SHIFT Left Mouse pans the camera
@@ -28,6 +28,11 @@
 // + Middle mouse button pans the camera
 // + Right mouse button dollys the camera.
 // + SHIFT Right Mouse triggers pick events
+// If SetInteractionModeToImage3D() is called, then some of the mouse
+// events are changed as follows:
+// + SHIFT Left Mouse rotates the camera for oblique slicing
+// + SHIFT Middle Mouse slices through the image
+// + CTRL Right Mouse also slices through the image
 //
 // Note that the renderer's actors are not moved; instead the camera is moved.
 
@@ -44,6 +49,14 @@
 
 #define VTKIS_WINDOW_LEVEL 1024
 #define VTKIS_PICK         1025
+#define VTKIS_SLICE        1026
+
+// Style flags
+
+#define VTKIS_IMAGE2D 2
+#define VTKIS_IMAGE3D 3
+
+class vtkImageProperty;
 
 class VTK_RENDERING_EXPORT vtkInteractorStyleImage : public vtkInteractorStyleTrackballCamera
 {
@@ -63,6 +76,8 @@ public:
   virtual void OnMouseMove();
   virtual void OnLeftButtonDown();
   virtual void OnLeftButtonUp();
+  virtual void OnMiddleButtonDown();
+  virtual void OnMiddleButtonUp();
   virtual void OnRightButtonDown();
   virtual void OnRightButtonUp();
 
@@ -76,12 +91,25 @@ public:
   // (use interactor's GetEventPosition and GetLastEventPosition)
   virtual void WindowLevel();
   virtual void Pick();
+  virtual void Slice();
   
   // Interaction mode entry points used internally.  
   virtual void StartWindowLevel();
   virtual void EndWindowLevel();
   virtual void StartPick();
   virtual void EndPick();
+  virtual void StartSlice();
+  virtual void EndSlice();
+
+  // Description:
+  // Set/Get current mode to 2D or 3D.  The default is 2D.  In 3D mode,
+  // it is possible to rotate the camera to view oblique slices.
+  vtkSetClampMacro(InteractionMode, int, VTKIS_IMAGE2D, VTKIS_IMAGE3D);
+  vtkGetMacro(InteractionMode, int);
+  void SetInteractionModeToImage2D() {
+    this->SetInteractionMode(VTKIS_IMAGE2D); }
+  void SetInteractionModeToImage3D() {
+    this->SetInteractionMode(VTKIS_IMAGE3D); }
 
 protected:
   vtkInteractorStyleImage();
@@ -89,7 +117,11 @@ protected:
 
   int WindowLevelStartPosition[2];
   int WindowLevelCurrentPosition[2];
+  double WindowLevelInitial[2];
+  vtkImageProperty *WindowLevelProperty;
  
+  int InteractionMode;
+
 private:
   vtkInteractorStyleImage(const vtkInteractorStyleImage&);  // Not implemented.
   void operator=(const vtkInteractorStyleImage&);  // Not implemented.
