@@ -38,17 +38,6 @@
 vtkStandardNewMacro(vtkOpenGLImageMapper3D);
 #endif
 
-// For vtkTemplateAliasMacro: remove the types that we want
-// to deal with as special cases from the macro expansion
-#undef VTK_USE_INT8
-#undef VTK_USE_UINT8
-#undef VTK_USE_INT16
-#undef VTK_USE_UINT16
-#define VTK_USE_INT8 0
-#define VTK_USE_UINT8 0
-#define VTK_USE_INT16 0
-#define VTK_USE_UINT16 0
-
 //----------------------------------------------------------------------------
 // Initializes an instance, generates a unique index.
 vtkOpenGLImageMapper3D::vtkOpenGLImageMapper3D()
@@ -299,6 +288,45 @@ void vtkImageMapperIntegerShiftScale(
     }
 }
 
+inline void vtkImageMapperShiftScale(
+  const vtkTypeInt8 *inPtr, unsigned char *outPtr, const int extent[6],
+  int numComp, int inIncY, int inIncZ, int outIncY, int outIncZ,
+  double shift, double scale)
+{
+   vtkImageMapperIntegerShiftScale(inPtr, outPtr, extent, numComp,
+                                   inIncY, inIncZ, outIncY, outIncZ,
+                                   shift, scale);
+}
+
+inline void vtkImageMapperShiftScale(
+  const vtkTypeUInt8 *inPtr, unsigned char *outPtr, const int extent[6],
+  int numComp, int inIncY, int inIncZ, int outIncY, int outIncZ,
+  double shift, double scale)
+{
+  vtkImageMapperIntegerShiftScale(inPtr, outPtr, extent, numComp,
+                                  inIncY, inIncZ, outIncY, outIncZ,
+                                  shift, scale);
+}
+
+inline void vtkImageMapperShiftScale(
+  const vtkTypeInt16 *inPtr, unsigned char *outPtr, const int extent[6],
+  int numComp, int inIncY, int inIncZ, int outIncY, int outIncZ,
+  double shift, double scale)
+{
+  vtkImageMapperIntegerShiftScale(inPtr, outPtr, extent, numComp,
+                                  inIncY, inIncZ, outIncY, outIncZ,
+                                  shift, scale);
+}
+
+inline void vtkImageMapperShiftScale(
+  const vtkTypeUInt16 *inPtr, unsigned char *outPtr, const int extent[6],
+  int numComp, int inIncY, int inIncZ, int outIncY, int outIncZ,
+  double shift, double scale)
+{
+  vtkImageMapperIntegerShiftScale(inPtr, outPtr, extent, numComp,
+                                  inIncY, inIncZ, outIncY, outIncZ,
+                                  shift, scale);
+}
 
 //----------------------------------------------------------------------------
 // Given an image and an extent, this method will return a
@@ -486,47 +514,16 @@ unsigned char *vtkOpenGLImageMapper3D::MakeTextureData(
       }
     else
       {
-      if (scalarType == VTK_TYPE_INT8)
+      switch (scalarType)
         {
-        vtkImageMapperIntegerShiftScale(static_cast<vtkTypeInt8 *>(inPtr),
-                                        outPtr, extent, numComp,
-                                        inIncY, inIncZ, outIncY, outIncZ,
-                                        shift, scale);
-        }
-      else if (scalarType == VTK_TYPE_UINT8)
-        {
-        vtkImageMapperIntegerShiftScale(static_cast<vtkTypeUInt8 *>(inPtr),
-                                        outPtr, extent, numComp,
-                                        inIncY, inIncZ, outIncY, outIncZ,
-                                        shift, scale);
-        }
-      else if (scalarType == VTK_TYPE_INT16)
-        {
-        vtkImageMapperIntegerShiftScale(static_cast<vtkTypeInt16 *>(inPtr),
-                                        outPtr, extent, numComp,
-                                        inIncY, inIncZ, outIncY, outIncZ,
-                                        shift, scale);
-        }
-      else if (scalarType == VTK_TYPE_UINT16)
-        {
-        vtkImageMapperIntegerShiftScale(static_cast<vtkTypeUInt16 *>(inPtr),
-                                        outPtr, extent, numComp,
-                                        inIncY, inIncZ, outIncY, outIncZ,
-                                        shift, scale);
-        }
-      else
-        {
-        switch (scalarType)
-          {
-          vtkTemplateAliasMacro(
-            vtkImageMapperShiftScale(static_cast<VTK_TT*>(inPtr),
-                                     outPtr, extent, numComp,
-                                     inIncY, inIncZ, outIncY, outIncZ,
-                                     shift, scale));
-          default:
-            vtkErrorWithObjectMacro(
-              this, "MakeTextureData: Unknown input ScalarType");
-          }
+        vtkTemplateAliasMacro(
+          vtkImageMapperShiftScale(static_cast<VTK_TT*>(inPtr),
+                                   outPtr, extent, numComp,
+                                   inIncY, inIncZ, outIncY, outIncZ,
+                                   shift, scale));
+        default:
+          vtkErrorWithObjectMacro(
+            this, "MakeTextureData: Unknown input ScalarType");
         }
       }
     }
@@ -1020,6 +1017,7 @@ void vtkOpenGLImageMapper3D::Render(vtkRenderer *ren, vtkImage *prop)
     if (mat[i] != tmpmat[i])
       {
       this->WorldToDataMatrix->DeepCopy(tmpmat);
+      break;
       }
     }
 
