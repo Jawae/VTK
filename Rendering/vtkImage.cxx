@@ -204,6 +204,7 @@ double vtkImage::GetMaxZBound()
 //----------------------------------------------------------------------------
 int vtkImage::GetIsOpaque()
 {
+  /*
   vtkImageMapper3D *mapper = this->GetMapper();
   vtkImageProperty *property = this->GetProperty();
   if (mapper && property)
@@ -213,7 +214,7 @@ int vtkImage::GetIsOpaque()
       return 1;
       }
     }
-
+  */
   return 0;
 }
 

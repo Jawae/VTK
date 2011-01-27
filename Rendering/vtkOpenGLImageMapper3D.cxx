@@ -184,23 +184,111 @@ void vtkImageMapperCopy(
   unsigned char *inPtr, unsigned char *outPtr, const int extent[6],
   int numComp, int inIncY, int inIncZ, int outIncY, int outIncZ)
 {
+  double alpha = 1.0;
+
   // number of values per row of input image
-  int rowLength = numComp*(extent[1] - extent[0] + 1);
+  int rowLength = extent[1] - extent[0] + 1;
+  if (rowLength <= 0)
+    {
+    return;
+    }
+  unsigned char alpha2 = static_cast<unsigned char>(alpha*255);
+  int alpha3 = static_cast<int>(alpha*65536);
 
   // loop through the data and copy it for the texture
-  for (int idxZ = extent[4]; idxZ <= extent[5]; idxZ++)
+  if (numComp == 1)
     {
-    for (int idxY = extent[2]; idxY <= extent[3]; idxY++)
+    for (int idxZ = extent[4]; idxZ <= extent[5]; idxZ++)
       {
-      for (int idxR = 0; idxR < rowLength; idxR++)
+      for (int idxY = extent[2]; idxY <= extent[3]; idxY++)
         {
-        *outPtr++ = *inPtr++;
+        int idx = rowLength;
+        do
+          {
+          unsigned char val = *inPtr++;
+          *outPtr++ = val;
+          *outPtr++ = val;
+          *outPtr++ = val;
+          *outPtr++ = alpha2;
+          }
+        while (--idx);
+
+        outPtr += outIncY;
+        inPtr += inIncY;
         }
-      outPtr += outIncY;
-      inPtr += inIncY;
+      outPtr += outIncZ;
+      inPtr += inIncZ;
       }
-    outPtr += outIncZ;
-    inPtr += inIncZ;
+    }
+  else if (numComp == 2)
+    {
+    for (int idxZ = extent[4]; idxZ <= extent[5]; idxZ++)
+      {
+      for (int idxY = extent[2]; idxY <= extent[3]; idxY++)
+        {
+        int idx = rowLength;
+        do
+          {
+          unsigned char val = *inPtr++;
+          *outPtr++ = val;
+          *outPtr++ = val;
+          *outPtr++ = val;
+          *outPtr++ = (((*inPtr++)*alpha3) >> 16);
+          }
+        while (--idx);
+
+        outPtr += outIncY;
+        inPtr += inIncY;
+        }
+      outPtr += outIncZ;
+      inPtr += inIncZ;
+      }
+    }
+  else if (numComp == 3)
+    {
+    for (int idxZ = extent[4]; idxZ <= extent[5]; idxZ++)
+      {
+      for (int idxY = extent[2]; idxY <= extent[3]; idxY++)
+        {
+        int idx = rowLength;
+        do
+          {
+          *outPtr++ = *inPtr++;
+          *outPtr++ = *inPtr++;
+          *outPtr++ = *inPtr++;
+          *outPtr++ = alpha2;
+          }
+        while (--idx);
+
+        outPtr += outIncY;
+        inPtr += inIncY;
+        }
+      outPtr += outIncZ;
+      inPtr += inIncZ;
+      }
+    }
+  else if (numComp == 4)
+    {
+    for (int idxZ = extent[4]; idxZ <= extent[5]; idxZ++)
+      {
+      for (int idxY = extent[2]; idxY <= extent[3]; idxY++)
+        {
+        int idx = rowLength;
+        do
+          {
+          *outPtr++ = *inPtr++;
+          *outPtr++ = *inPtr++;
+          *outPtr++ = *inPtr++;
+          *outPtr++ = (((*inPtr++)*alpha3) >> 16);
+          }
+        while (--idx);
+
+        outPtr += outIncY;
+        inPtr += inIncY;
+        }
+      outPtr += outIncZ;
+      inPtr += inIncZ;
+      }
     }
 }
 
@@ -212,27 +300,146 @@ void vtkImageMapperShiftScale(
   int numComp, int inIncY, int inIncZ, int outIncY, int outIncZ,
   double shift, double scale)
 {
+  double alpha = 1.0;
+
   // number of values per row of input image
-  int rowLength = numComp*(extent[1] - extent[0] + 1);
+  int rowLength = (extent[1] - extent[0] + 1);
+  if (rowLength <= 0)
+    {
+    return;
+    }
+
+  unsigned char alpha2 = static_cast<unsigned char>(alpha*255);
 
   // loop through the data and copy it for the texture
-  for (int idxZ = extent[4]; idxZ <= extent[5]; idxZ++)
+  if (numComp == 1)
     {
-    for (int idxY = extent[2]; idxY <= extent[3]; idxY++)
+    for (int idxZ = extent[4]; idxZ <= extent[5]; idxZ++)
       {
-      for (int idxR = 0; idxR < rowLength; idxR++)
+      for (int idxY = extent[2]; idxY <= extent[3]; idxY++)
         {
-        // Pixel operation
-        double val = (*inPtr++ + shift)*scale;
-        if (val < 0) { val = 0; }
-        if (val > 255) { val = 255; }
-        *outPtr++ = static_cast<unsigned char>(val);
+        int idx = rowLength;
+        do
+          {
+          // Pixel operation
+          double val = (*inPtr++ + shift)*scale;
+          if (val < 0) { val = 0; }
+          if (val > 255) { val = 255; }
+          unsigned char cval = static_cast<unsigned char>(val);
+          *outPtr++ = cval;
+          *outPtr++ = cval;
+          *outPtr++ = cval;
+          *outPtr++ = alpha2;
+          }
+        while (--idx);
+
+        outPtr += outIncY;
+        inPtr += inIncY;
         }
-      outPtr += outIncY;
-      inPtr += inIncY;
+      outPtr += outIncZ;
+      inPtr += inIncZ;
       }
-    outPtr += outIncZ;
-    inPtr += inIncZ;
+    }
+  else if (numComp == 2)
+    {
+    for (int idxZ = extent[4]; idxZ <= extent[5]; idxZ++)
+      {
+      for (int idxY = extent[2]; idxY <= extent[3]; idxY++)
+        {
+        int idx = rowLength;
+        do
+          {
+          // Pixel operation
+          double val = (*inPtr++ + shift)*scale;
+          if (val < 0) { val = 0; }
+          if (val > 255) { val = 255; }
+          unsigned char cval = static_cast<unsigned char>(val);
+          val = (*inPtr++ + shift)*scale;
+          if (val < 0) { val = 0; }
+          if (val > 255) { val = 255; }
+          unsigned char aval = static_cast<unsigned char>(val*alpha);
+          *outPtr++ = cval;
+          *outPtr++ = cval;
+          *outPtr++ = cval;
+          *outPtr++ = aval;
+          }
+        while (--idx);
+
+        outPtr += outIncY;
+        inPtr += inIncY;
+        }
+      outPtr += outIncZ;
+      inPtr += inIncZ;
+      }
+    }
+  else if (numComp == 3)
+    {
+    for (int idxZ = extent[4]; idxZ <= extent[5]; idxZ++)
+      {
+      for (int idxY = extent[2]; idxY <= extent[3]; idxY++)
+        {
+        int idx = rowLength;
+        do
+          {
+          // Pixel operation
+          double r = (*inPtr++ + shift)*scale;
+          if (r < 0) { r = 0; }
+          if (r > 255) { r = 255; }
+          double g = (*inPtr++ + shift)*scale;
+          if (g < 0) { g = 0; }
+          if (g > 255) { g = 255; }
+          double b = (*inPtr++ + shift)*scale;
+          if (b < 0) { b = 0; }
+          if (b > 255) { b = 255; }
+          *outPtr++ = static_cast<unsigned char>(r);
+          *outPtr++ = static_cast<unsigned char>(g);
+          *outPtr++ = static_cast<unsigned char>(b);
+          *outPtr++ = alpha2;
+          }
+        while (--idx);
+
+        outPtr += outIncY;
+        inPtr += inIncY;
+        }
+      outPtr += outIncZ;
+      inPtr += inIncZ;
+      }
+    }
+  else if (numComp == 4)
+    {
+    for (int idxZ = extent[4]; idxZ <= extent[5]; idxZ++)
+      {
+      for (int idxY = extent[2]; idxY <= extent[3]; idxY++)
+        {
+        int idx = rowLength;
+        do
+          {
+          // Pixel operation
+          double r = (*inPtr++ + shift)*scale;
+          if (r < 0) { r = 0; }
+          if (r > 255) { r = 255; }
+          double g = (*inPtr++ + shift)*scale;
+          if (g < 0) { g = 0; }
+          if (g > 255) { g = 255; }
+          double b = (*inPtr++ + shift)*scale;
+          if (b < 0) { b = 0; }
+          if (b > 255) { b = 255; }
+          double a = (*inPtr++ + shift)*scale;
+          if (a < 0) { a = 0; }
+          if (a > 255) { a = 255; }
+          *outPtr++ = static_cast<unsigned char>(r);
+          *outPtr++ = static_cast<unsigned char>(g);
+          *outPtr++ = static_cast<unsigned char>(b);
+          *outPtr++ = static_cast<unsigned char>(a*alpha);
+          }
+        while (--idx);
+
+        outPtr += outIncY;
+        inPtr += inIncY;
+        }
+      outPtr += outIncZ;
+      inPtr += inIncZ;
+      }
     }
 }
 
@@ -245,6 +452,8 @@ void vtkImageMapperIntegerShiftScale(
   int numComp, int inIncY, int inIncZ, int outIncY, int outIncZ,
   double shift, double scale)
 {
+  double alpha = 1.0;
+
   // Find the number of bits to use for the fraction:
   // continue increasing the bits until there is an overflow
   // in the worst case, then decrease by 1.
@@ -264,27 +473,161 @@ void vtkImageMapperIntegerShiftScale(
   int intShift = static_cast<int>(intScale*shift);
 
   // number of values per row of input image
-  int rowLength = numComp*(extent[1] - extent[0] + 1);
+  int rowLength = (extent[1] - extent[0] + 1);
+  if (rowLength <= 0)
+    {
+    return;
+    }
+
+  unsigned char alpha2 = static_cast<unsigned char>(alpha*255);
+  int alpha3 = static_cast<unsigned char>(alpha*65536);
 
   // loop through the data and copy it for the texture
-  for (int idxZ = extent[4]; idxZ <= extent[5]; idxZ++)
+  if (numComp == 1)
     {
-    for (int idxY = extent[2]; idxY <= extent[3]; idxY++)
+    for (int idxZ = extent[4]; idxZ <= extent[5]; idxZ++)
       {
-      for (int idxR = 0; idxR < rowLength; idxR++)
+      for (int idxY = extent[2]; idxY <= extent[3]; idxY++)
         {
-        // Pixel operation
-        int tmpval = *inPtr++ * intScale + intShift;
-        int val = (tmpval >> bitShift);
-        if (tmpval < 0) { val = 0; }
-        if (val > 255) { val = 255; }
-        *outPtr++ = static_cast<unsigned char>(val);
+        int idx = rowLength;
+        do
+          {
+          // Pixel operation
+          int tmpval = *inPtr++ * intScale + intShift;
+          int val = (tmpval >> bitShift);
+          if (tmpval < 0) { val = 0; }
+          if (val > 255) { val = 255; }
+          unsigned char cval = static_cast<unsigned char>(val);
+          *outPtr++ = cval;
+          *outPtr++ = cval;
+          *outPtr++ = cval;
+          *outPtr++ = alpha2;
+          }
+        while (--idx);
+
+        outPtr += outIncY;
+        inPtr += inIncY;
         }
-      outPtr += outIncY;
-      inPtr += inIncY;
+      outPtr += outIncZ;
+      inPtr += inIncZ;
       }
-    outPtr += outIncZ;
-    inPtr += inIncZ;
+    }
+  else if (numComp == 2)
+    {
+    for (int idxZ = extent[4]; idxZ <= extent[5]; idxZ++)
+      {
+      for (int idxY = extent[2]; idxY <= extent[3]; idxY++)
+        {
+        int idx = rowLength;
+        do
+          {
+          // Pixel operation
+          int tmpval = *inPtr++ * intScale + intShift;
+          int val = (tmpval >> bitShift);
+          if (tmpval < 0) { val = 0; }
+          if (val > 255) { val = 255; }
+          unsigned char cval = static_cast<unsigned char>(val);
+          tmpval = *inPtr++ * intScale + intShift;
+          val = (tmpval >> bitShift);
+          if (tmpval < 0) { val = 0; }
+          if (val > 255) { val = 255; }
+          unsigned char aval = static_cast<unsigned char>((val*alpha3) >> 16);
+          *outPtr++ = cval;
+          *outPtr++ = cval;
+          *outPtr++ = cval;
+          *outPtr++ = aval;
+          }
+        while (--idx);
+
+        outPtr += outIncY;
+        inPtr += inIncY;
+        }
+      outPtr += outIncZ;
+      inPtr += inIncZ;
+      }
+    }
+  else if (numComp == 3)
+    {
+    for (int idxZ = extent[4]; idxZ <= extent[5]; idxZ++)
+      {
+      for (int idxY = extent[2]; idxY <= extent[3]; idxY++)
+        {
+        int idx = rowLength;
+        do
+          {
+          // Pixel operation
+          int tmpval = *inPtr++ * intScale + intShift;
+          int val = (tmpval >> bitShift);
+          if (tmpval < 0) { val = 0; }
+          if (val > 255) { val = 255; }
+          unsigned char r = static_cast<unsigned char>(val);
+          tmpval = *inPtr++ * intScale + intShift;
+          val = (tmpval >> bitShift);
+          if (tmpval < 0) { val = 0; }
+          if (val > 255) { val = 255; }
+          unsigned char g = static_cast<unsigned char>(val);
+          tmpval = *inPtr++ * intScale + intShift;
+          val = (tmpval >> bitShift);
+          if (tmpval < 0) { val = 0; }
+          if (val > 255) { val = 255; }
+          unsigned char b = static_cast<unsigned char>(val);
+          *outPtr++ = r;
+          *outPtr++ = g;
+          *outPtr++ = b;
+          *outPtr++ = alpha2;
+          }
+        while (--idx);
+
+        outPtr += outIncY;
+        inPtr += inIncY;
+        }
+      outPtr += outIncZ;
+      inPtr += inIncZ;
+      }
+    }
+  else if (numComp == 4)
+    {
+    for (int idxZ = extent[4]; idxZ <= extent[5]; idxZ++)
+      {
+      for (int idxY = extent[2]; idxY <= extent[3]; idxY++)
+        {
+        int idx = rowLength;
+        do
+          {
+          // Pixel operation
+          int tmpval = *inPtr++ * intScale + intShift;
+          int val = (tmpval >> bitShift);
+          if (tmpval < 0) { val = 0; }
+          if (val > 255) { val = 255; }
+          unsigned char r = static_cast<unsigned char>(val);
+          tmpval = *inPtr++ * intScale + intShift;
+          val = (tmpval >> bitShift);
+          if (tmpval < 0) { val = 0; }
+          if (val > 255) { val = 255; }
+          unsigned char g = static_cast<unsigned char>(val);
+          tmpval = *inPtr++ * intScale + intShift;
+          val = (tmpval >> bitShift);
+          if (tmpval < 0) { val = 0; }
+          if (val > 255) { val = 255; }
+          unsigned char b = static_cast<unsigned char>(val);
+          tmpval = *inPtr++ * intScale + intShift;
+          val = (tmpval >> bitShift);
+          if (tmpval < 0) { val = 0; }
+          if (val > 255) { val = 255; }
+          unsigned char a = static_cast<unsigned char>((val*alpha3) >> 16);
+          *outPtr++ = r;
+          *outPtr++ = g;
+          *outPtr++ = b;
+          *outPtr++ = a;
+          }
+        while (--idx);
+
+        outPtr += outIncY;
+        inPtr += inIncY;
+        }
+      outPtr += outIncZ;
+      inPtr += inIncZ;
+      }
     }
 }
 
@@ -357,8 +700,25 @@ unsigned char *vtkOpenGLImageMapper3D::MakeTextureData(
 
   // number of components
   int numComp = input->GetNumberOfScalarComponents();
-  bytesPerPixel = numComp;
+  bytesPerPixel = 4;
   int scalarType = input->GetScalarType();
+
+  // lookup table and window/level
+  double colorWindow = 255.0;
+  double colorLevel = 125.0;
+  vtkScalarsToColors *lookupTable = 0;
+
+  if (property)
+    {
+    colorWindow = property->GetColorWindow();
+    colorLevel = property->GetColorLevel();
+    lookupTable = property->GetLookupTable();
+    }
+
+  if (lookupTable)
+    {
+    bytesPerPixel = 4;
+    }
 
   // get spacing/origin for the quad coordinates
   double *spacing = input->GetSpacing();
@@ -402,7 +762,7 @@ unsigned char *vtkOpenGLImageMapper3D::MakeTextureData(
   // reuse texture if texture size has not changed
   if (textureSize[0] == this->TextureSize[0] &&
       textureSize[1] == this->TextureSize[1] &&
-      numComp == this->TextureBytesPerPixel)
+      bytesPerPixel == this->TextureBytesPerPixel)
     {
     // if texture is reused, only reload the image portion
     xsize = imageSize[0];
@@ -431,7 +791,7 @@ unsigned char *vtkOpenGLImageMapper3D::MakeTextureData(
       {
       contiguous = 1;
       // if contiguous and correct data type, use data as-is
-      if (scalarType == VTK_UNSIGNED_CHAR)
+      if (scalarType == VTK_UNSIGNED_CHAR && numComp == bytesPerPixel)
         {
         releaseData = 0;
         return static_cast<unsigned char *>(
@@ -442,10 +802,7 @@ unsigned char *vtkOpenGLImageMapper3D::MakeTextureData(
 
   // could not directly use input data, so allocate a new array
   releaseData = 1;
-  if (property && property->GetLookupTable())
-    {
-    bytesPerPixel = 4;
-    }
+
   unsigned char *outPtr = new unsigned char [ysize*xsize*bytesPerPixel];
 
   // output increments
@@ -463,30 +820,16 @@ unsigned char *vtkOpenGLImageMapper3D::MakeTextureData(
   input->GetContinuousIncrements(extent, inIncX, inIncY, inIncZ);
 
   // reformat the data for use as a texture
-  if (property && property->GetLookupTable())
+  /*
+  if (property && lookupTable)
     {
-    vtkScalarsToColors *lookupTable = property->GetLookupTable();
-    double colorWindow = property->GetColorWindow();
-    double colorLevel = property->GetColorLevel();
-
     // apply a lookup table
-    if (!property->GetUseLookupTableScalarRange())
-      {
-      lookupTable->SetRange(colorLevel - 0.5*colorWindow,
-                            colorLevel + 0.5*colorWindow);
-      }
-    lookupTable->SetAlpha(property->GetOpacity());
-
     vtkImageMapperLookupTable(inPtr, outPtr, extent, numComp,
                               inIncY, inIncZ, outIncY, outIncZ,
                               scalarType, lookupTable);
     }
-  else // no lookup table
+  else // no lookup table, do a shift/scale calculation
     {
-    // apply the window/level but no lookup table
-    double colorWindow = property->GetColorWindow();
-    double colorLevel = property->GetColorLevel();
-
     double shift = 0.0;
     double scale = 1.0;
 
@@ -508,9 +851,11 @@ unsigned char *vtkOpenGLImageMapper3D::MakeTextureData(
         static_cast<int>(shift*scale) == 0 &&
         static_cast<int>((255 + shift)*scale) == 255)
       {
+    */
       vtkImageMapperCopy(static_cast<unsigned char *>(inPtr),
-                         outPtr, extent, numComp,
+                         outPtr, extent, 4, //numComp,
                          inIncY, inIncZ, outIncY, outIncZ);
+    /*
       }
     else
       {
@@ -527,6 +872,7 @@ unsigned char *vtkOpenGLImageMapper3D::MakeTextureData(
         }
       }
     }
+  */
 
   return outPtr;
 }
@@ -712,7 +1058,7 @@ void vtkOpenGLImageMapper3D::InternalLoad(
   glDisable(GL_COLOR_MATERIAL);
   glDisable(GL_CULL_FACE);
   glDisable(GL_LIGHTING);
-  glColor4f(1.0, 1.0, 1.0, 1.0); // property->GetOpacity();
+  glColor4f(1.0, 1.0, 1.0, property->GetOpacity());
   glBegin(GL_QUADS);
   for (int i = 0; i < 4; i++ )
     {
@@ -813,9 +1159,36 @@ void vtkOpenGLImageMapper3D::RecursiveLoad(
 void vtkOpenGLImageMapper3D::Load(vtkRenderer *ren, vtkImageProperty *property)
 {
   vtkImageReslice *reslice = this->ImageReslice;
+  vtkScalarsToColors *lookupTable = this->DefaultLookupTable;
 
   reslice->SetInput(this->GetInput());
-  reslice->Update();
+  //reslice->OptimizationOff();
+  if (property)
+    {
+    double colorWindow = property->GetColorWindow();
+    double colorLevel = property->GetColorLevel();
+    if (property->GetLookupTable())
+      {
+      lookupTable = property->GetLookupTable();
+      if (!property->GetUseLookupTableScalarRange())
+        {
+        lookupTable->SetRange(colorLevel - 0.5*colorWindow,
+                              colorLevel + 0.5*colorWindow);
+        }
+      }
+    else
+      {
+      lookupTable->SetRange(colorLevel - 0.5*colorWindow,
+                            colorLevel + 0.5*colorWindow);
+      }
+    }
+  else
+    {
+    lookupTable->SetRange(0, 255);
+    }
+
+  reslice->SetLookupTable(lookupTable);
+  reslice->UpdateWholeExtent();
 
   this->RecursiveLoad(
     ren, property, reslice->GetOutput(), reslice->GetOutputExtent());

@@ -46,6 +46,30 @@ vtkInteractorStyleImage::vtkInteractorStyleImage()
   this->WindowLevelProperty = 0;
 
   this->InteractionMode = VTKIS_IMAGE2D;
+
+  this->XViewLeftToRight[0] = 0;
+  this->XViewLeftToRight[1] = 1;
+  this->XViewLeftToRight[2] = 0;
+
+  this->XViewUp[0] = 0;
+  this->XViewUp[1] = 0;
+  this->XViewUp[2] = -1;
+
+  this->YViewLeftToRight[0] = 1;
+  this->YViewLeftToRight[1] = 0;
+  this->YViewLeftToRight[2] = 0;
+
+  this->YViewUp[0] = 0;
+  this->YViewUp[1] = 0;
+  this->YViewUp[2] = -1;
+
+  this->ZViewLeftToRight[0] = 1;
+  this->ZViewLeftToRight[1] = 0;
+  this->ZViewLeftToRight[2] = 0;
+
+  this->ZViewUp[0] = 0;
+  this->ZViewUp[1] = 1;
+  this->ZViewUp[2] = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -424,6 +448,30 @@ void vtkInteractorStyleImage::OnChar()
         }
       break;
 
+    case 'x' :
+    case 'X' :
+      {
+      this->SetImageOrientation(this->XViewLeftToRight, this->XViewUp);
+      this->Interactor->Render();
+      }
+      break;
+
+    case 'y' :
+    case 'Y' :
+      {
+      this->SetImageOrientation(this->YViewLeftToRight, this->YViewUp);
+      this->Interactor->Render();
+      }
+      break;
+
+    case 'z' :
+    case 'Z' :
+      {
+      this->SetImageOrientation(this->ZViewLeftToRight, this->ZViewUp);
+      this->Interactor->Render();
+      }
+      break;
+
     default:
       this->Superclass::OnChar();
       break;
@@ -555,6 +603,26 @@ void vtkInteractorStyleImage::Slice()
 }
 
 //----------------------------------------------------------------------------
+void vtkInteractorStyleImage::SetImageOrientation(
+  const double leftToRight[3], const double viewUp[3])
+{
+  if (this->CurrentRenderer)
+    {
+    double vector[3];
+    vtkMath::Cross(leftToRight, viewUp, vector);
+    double focus[3];
+    vtkCamera *camera = this->CurrentRenderer->GetActiveCamera();
+    camera->GetFocalPoint(focus);
+    double d = camera->GetDistance();
+    camera->SetPosition(focus[0] - d*vector[0],
+                        focus[1] - d*vector[1],
+                        focus[2] - d*vector[2]);
+    camera->SetFocalPoint(focus);
+    camera->SetViewUp(viewUp);
+    }
+}
+
+//----------------------------------------------------------------------------
 void vtkInteractorStyleImage::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os, indent);
@@ -569,4 +637,34 @@ void vtkInteractorStyleImage::PrintSelf(ostream& os, vtkIndent indent)
 
   os << indent << "Interaction Mode: " <<
      ((this->InteractionMode == VTKIS_IMAGE3D) ? "Image3D\n" : "Image2D\n");
+
+  os << indent << "X View Left To Right: ("
+     << this->XViewLeftToRight[0] << ", "
+     << this->XViewLeftToRight[1] << ", "
+     << this->XViewLeftToRight[2] << ")\n";
+
+  os << indent << "X View Up: ("
+     << this->XViewUp[0] << ", "
+     << this->XViewUp[1] << ", "
+     << this->XViewUp[2] << ")\n";
+
+  os << indent << "Y View Left To Right: ("
+     << this->YViewLeftToRight[0] << ", "
+     << this->YViewLeftToRight[1] << ", "
+     << this->YViewLeftToRight[2] << ")\n";
+
+  os << indent << "Y View Up: ("
+     << this->YViewUp[0] << ", "
+     << this->YViewUp[1] << ", "
+     << this->YViewUp[2] << ")\n";
+
+  os << indent << "Z View Left To Right: ("
+     << this->ZViewLeftToRight[0] << ", "
+     << this->ZViewLeftToRight[1] << ", "
+     << this->ZViewLeftToRight[2] << ")\n";
+
+  os << indent << "Z View Up: ("
+     << this->ZViewUp[0] << ", "
+     << this->ZViewUp[1] << ", "
+     << this->ZViewUp[2] << ")\n";
 }

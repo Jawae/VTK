@@ -18,6 +18,7 @@
 #include "vtkImage.h"
 #include "vtkImageData.h"
 #include "vtkImageProperty.h"
+#include "vtkLookupTable.h"
 #include "vtkMath.h"
 #include "vtkExecutive.h"
 #include "vtkGarbageCollector.h"
@@ -49,11 +50,24 @@ vtkImageMapper3D::vtkImageMapper3D()
   this->SliceNormal[0] = 0.0;
   this->SliceNormal[1] = 0.0;
   this->SliceNormal[2] = 1.0;
+
+  // Build a default greyscale lookup table
+  this->DefaultLookupTable = vtkLookupTable::New();
+  this->DefaultLookupTable->SetRampToLinear();
+  this->DefaultLookupTable->SetValueRange(0.0, 1.0);
+  this->DefaultLookupTable->SetSaturationRange(0.0, 0.0);
+  this->DefaultLookupTable->SetAlphaRange(1.0, 1.0);
+  this->DefaultLookupTable->Build();
+  this->DefaultLookupTable->SetVectorModeToColors();
 }
 
 //----------------------------------------------------------------------------
 vtkImageMapper3D::~vtkImageMapper3D()
 {
+  if (this->DefaultLookupTable)
+    {
+    this->DefaultLookupTable->Delete();
+    }
 }
 
 //----------------------------------------------------------------------------

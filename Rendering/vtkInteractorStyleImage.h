@@ -33,7 +33,11 @@
 // + SHIFT Left Mouse rotates the camera for oblique slicing
 // + SHIFT Middle Mouse slices through the image
 // + CTRL Right Mouse also slices through the image
-//
+// In both modes, the following key bindings are in effect:
+// + R Reset the Window/Level
+// + X Reset to a sagittal view
+// + Y Reset to a coronal view
+// + Z Reset to an axial view
 // Note that the renderer's actors are not moved; instead the camera is moved.
 
 // .SECTION See Also
@@ -111,6 +115,34 @@ public:
   void SetInteractionModeToImage3D() {
     this->SetInteractionMode(VTKIS_IMAGE3D); }
 
+  // Description:
+  // Set the canonical orientations for X, Y, and Z.  These allow you to
+  // specify, for each view, what the "Up" direction should be and what
+  // the "Left-to-Right" direction should be, where "left" and "right"
+  // correspond to your own left and right while you are looking at the
+  // computer screen.  The "Up" direction will be orthogonalized with
+  // respect to the "LeftToRight" direction.
+  vtkSetVector3Macro(XViewLeftToRight, double);
+  vtkGetVector3Macro(XViewLeftToRight, double);
+  vtkSetVector3Macro(XViewUp, double);
+  vtkGetVector3Macro(XViewUp, double);
+  vtkSetVector3Macro(YViewLeftToRight, double);
+  vtkGetVector3Macro(YViewLeftToRight, double);
+  vtkSetVector3Macro(YViewUp, double);
+  vtkGetVector3Macro(YViewUp, double);
+  vtkSetVector3Macro(ZViewLeftToRight, double);
+  vtkGetVector3Macro(ZViewLeftToRight, double);
+  vtkSetVector3Macro(ZViewUp, double);
+  vtkGetVector3Macro(ZViewUp, double);
+
+  // Description:
+  // Set the image orientation.  The first parameter is the
+  // LeftToRight vector and the second parameter is the Up vector.
+  // All this does is change the position of the camera to achieve
+  // the specified viewpoint.
+  void SetImageOrientation(const double leftToRight[3],
+                           const double viewUp[3]);
+
 protected:
   vtkInteractorStyleImage();
   ~vtkInteractorStyleImage();
@@ -121,6 +153,12 @@ protected:
   vtkImageProperty *WindowLevelProperty;
  
   int InteractionMode;
+  double XViewLeftToRight[3];
+  double XViewUp[3];
+  double YViewLeftToRight[3];
+  double YViewUp[3];
+  double ZViewLeftToRight[3];
+  double ZViewUp[3];
 
 private:
   vtkInteractorStyleImage(const vtkInteractorStyleImage&);  // Not implemented.

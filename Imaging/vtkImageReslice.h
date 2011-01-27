@@ -63,6 +63,7 @@ class vtkImageData;
 class vtkAbstractTransform;
 class vtkMatrix4x4;
 class vtkImageStencilData;
+class vtkScalarsToColors;
 
 class VTK_IMAGING_EXPORT vtkImageReslice : public vtkThreadedImageAlgorithm
 {
@@ -292,6 +293,13 @@ public:
     {this->SetOutputScalarType(VTK_UNSIGNED_CHAR);}
 
   // Description:
+  // Set a lookup table to apply to the data.  If this is set,
+  // then the output will be RGBA unsigned char.  Any voxels
+  // that are out of bounds will be set to the BackgroundColor.
+  void SetLookupTable(vtkScalarsToColors *table);
+  vtkScalarsToColors *GetLookupTable() { return this->LookupTable; }
+
+  // Description:
   // When determining the modified time of the filter, 
   // this check the modified time of the transform and matrix.
   unsigned long int GetMTime();
@@ -326,6 +334,18 @@ public:
   void SetStencil(vtkImageStencilData *stencil);
   vtkImageStencilData *GetStencil();
 
+  // Description:
+  // Generate an output stencil that defines which pixels were
+  // interpolated and which pixels were out-of-bounds of the input.
+  vtkSetMacro(GenerateStencilOutput, int);
+  vtkGetMacro(GenerateStencilOutput, int);
+  vtkBooleanMacro(GenerateStencilOutput, int);
+
+  // Description:
+  // Get the output stencil.
+  vtkImageStencilData *GetStencilOutput() {
+    return this->StencilOutput; }
+
 protected:
   vtkImageReslice();
   ~vtkImageReslice();
@@ -352,6 +372,9 @@ protected:
   int ComputeOutputOrigin;
   int ComputeOutputExtent;
   int OutputScalarType;
+  int GenerateStencilOutput;
+  vtkImageStencilData *StencilOutput;
+  vtkScalarsToColors *LookupTable;
 
   vtkMatrix4x4 *IndexMatrix;
   vtkAbstractTransform *OptimizedTransform;

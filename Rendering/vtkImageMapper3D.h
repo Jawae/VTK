@@ -26,7 +26,7 @@
 #include "vtkAbstractMapper3D.h"
 
 class vtkRenderer;
-class vtkScalarsToColors;
+class vtkLookupTable;
 class vtkImage;
 class vtkImageData;
 
@@ -162,6 +162,7 @@ protected:
 
   int UseFocalPointAsSlicePoint;
   int UseViewPlaneNormalAsSliceNormal;
+  vtkLookupTable *DefaultLookupTable;
 
 private:
   vtkImageMapper3D(const vtkImageMapper3D&);  // Not implemented.
