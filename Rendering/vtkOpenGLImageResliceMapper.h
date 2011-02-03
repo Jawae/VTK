@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Visualization Toolkit
-  Module:    vtkOpenGLImageMapper3D.h
+  Module:    vtkOpenGLImageResliceMapper.h
 
   Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -12,19 +12,19 @@
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
-// .NAME vtkOpenGLImageMapper3D - OpenGL mapper for image slice display
+// .NAME vtkOpenGLImageResliceMapper - OpenGL mapper for image slice display
 // .SECTION Description
-// vtkOpenGLImageMapper3D is a concrete implementation of the abstract
-// class vtkImageMapper3D that interfaces to the OpenGL rendering library.
+// vtkOpenGLImageResliceMapper is a concrete implementation of the abstract
+// class vtkImageResliceMapper that interfaces to the OpenGL rendering library.
 // Depending on the operations that are being performed, it will either
 // do the rendering completely on the GPU, or will use a combination of
 // CPU and GPU computations.  The CPU is used for operations like oblique
 // slice extraction and cubic interpolation.
 
-#ifndef __vtkOpenGLImageMapper3D_h
-#define __vtkOpenGLImageMapper3D_h
+#ifndef __vtkOpenGLImageResliceMapper_h
+#define __vtkOpenGLImageResliceMapper_h
 
-#include "vtkImageMapper3D.h"
+#include "vtkImageResliceMapper.h"
 
 class vtkWindow;
 class vtkRenderer;
@@ -32,14 +32,15 @@ class vtkRenderWindow;
 class vtkImage;
 class vtkImageProperty;
 class vtkImageData;
-class vtkImageReslice;
+class vtkImageResliceToColors;
 class vtkMatrix4x4;
 
-class VTK_RENDERING_EXPORT vtkOpenGLImageMapper3D : public vtkImageMapper3D
+class VTK_RENDERING_EXPORT vtkOpenGLImageResliceMapper :
+  public vtkImageResliceMapper
 {
 public:
-  static vtkOpenGLImageMapper3D *New();
-  vtkTypeMacro(vtkOpenGLImageMapper3D,vtkImageMapper3D);
+  static vtkOpenGLImageResliceMapper *New();
+  vtkTypeMacro(vtkOpenGLImageResliceMapper,vtkImageResliceMapper);
   virtual void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -57,8 +58,8 @@ public:
   void ReleaseGraphicsResources(vtkWindow *);
 
 protected:
-  vtkOpenGLImageMapper3D();
-  ~vtkOpenGLImageMapper3D();
+  vtkOpenGLImageResliceMapper();
+  ~vtkOpenGLImageResliceMapper();
 
   // Description:
   // Non-recursive internal method, generate a single texture
@@ -109,7 +110,7 @@ protected:
   vtkTimeStamp LoadTime;
   long Index; // OpenGL ID for texture or display list
   vtkRenderWindow *RenderWindow; // RenderWindow used for previous render
-  vtkImageReslice *ImageReslice; // For software interpolation
+  vtkImageResliceToColors *ImageReslice; // For software interpolation
   vtkMatrix4x4 *ResliceMatrix;
   vtkMatrix4x4 *WorldToDataMatrix; // Data to World transform matrix
   vtkMatrix4x4 *SliceToWorldMatrix; // Slice to World transform matrix
@@ -119,8 +120,8 @@ protected:
   int TextureBytesPerPixel;
 
 private:
-  vtkOpenGLImageMapper3D(const vtkOpenGLImageMapper3D&);  // Not implemented.
-  void operator=(const vtkOpenGLImageMapper3D&);  // Not implemented.
+  vtkOpenGLImageResliceMapper(const vtkOpenGLImageResliceMapper&);  // Not implemented.
+  void operator=(const vtkOpenGLImageResliceMapper&);  // Not implemented.
 };
 
 #endif

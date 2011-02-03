@@ -60,6 +60,8 @@ const char *vtkImageProperty::GetInterpolationTypeAsString()
       return "ReservedValue";
     case VTK_CUBIC_INTERPOLATION:
       return "Cubic";
+    case VTK_LANCZOS_INTERPOLATION:
+      return "Lanczos";
     }
   return "";
 }

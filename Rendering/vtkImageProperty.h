@@ -27,6 +27,7 @@
 // temporary, should go in vtkSystemIncludes.h
 #define VTK_RESERVED2_INTERPOLATION 2
 #define VTK_CUBIC_INTERPOLATION 3
+#define VTK_LANCZOS_INTERPOLATION 4
 
 class vtkScalarsToColors;
 
@@ -79,7 +80,7 @@ public:
   // Description:
   // The interpolation type (default: nearest neighbor).
   vtkSetClampMacro(InterpolationType, int,
-                   VTK_NEAREST_INTERPOLATION, VTK_CUBIC_INTERPOLATION);
+                   VTK_NEAREST_INTERPOLATION, VTK_LANCZOS_INTERPOLATION);
   vtkGetMacro(InterpolationType, int);
   void SetInterpolationTypeToNearest() {
     this->SetInterpolationType(VTK_NEAREST_INTERPOLATION); };
@@ -87,6 +88,8 @@ public:
     this->SetInterpolationType(VTK_LINEAR_INTERPOLATION); };
   void SetInterpolationTypeToCubic() {
     this->SetInterpolationType(VTK_CUBIC_INTERPOLATION); };
+  void SetInterpolationTypeToLanczos() {
+    this->SetInterpolationType(VTK_LANCZOS_INTERPOLATION); };
   virtual const char *GetInterpolationTypeAsString();
 
   // Description:

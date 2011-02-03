@@ -15,42 +15,17 @@
 #include "vtkImageMapper3D.h"
 
 #include "vtkRenderer.h"
-#include "vtkImage.h"
 #include "vtkImageData.h"
 #include "vtkImageProperty.h"
 #include "vtkLookupTable.h"
-#include "vtkMath.h"
 #include "vtkExecutive.h"
 #include "vtkGarbageCollector.h"
 #include "vtkInformation.h"
 #include "vtkGraphicsFactory.h"
 
 //----------------------------------------------------------------------------
-// Needed when we don't use the vtkStandardNewMacro.
-vtkInstantiatorNewMacro(vtkImageMapper3D);
-
-//----------------------------------------------------------------------------
-vtkImageMapper3D* vtkImageMapper3D::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkGraphicsFactory::CreateInstance("vtkImageMapper3D");
-  return static_cast<vtkImageMapper3D *>(ret);
-}
-
-//----------------------------------------------------------------------------
 vtkImageMapper3D::vtkImageMapper3D()
 {
-  this->UseFocalPointAsSlicePoint = 1;
-  this->UseViewPlaneNormalAsSliceNormal = 1;
-
-  this->SlicePoint[0] = 0.0;
-  this->SlicePoint[1] = 0.0;
-  this->SlicePoint[2] = 0.0;
-
-  this->SliceNormal[0] = 0.0;
-  this->SliceNormal[1] = 0.0;
-  this->SliceNormal[2] = 1.0;
-
   // Build a default greyscale lookup table
   this->DefaultLookupTable = vtkLookupTable::New();
   this->DefaultLookupTable->SetRampToLinear();
@@ -111,47 +86,6 @@ void vtkImageMapper3D::Render(vtkRenderer *ren, vtkImage *image)
 void vtkImageMapper3D::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
-}
-
-//----------------------------------------------------------------------------
-unsigned long vtkImageMapper3D::GetMTime()
-{
-  unsigned long mTime = this->Superclass::GetMTime();
-
-  return mTime;
-}
-
-//----------------------------------------------------------------------------
-double *vtkImageMapper3D::GetBounds()
-{
-  // Modify to give just the slice bounds
-  if (!this->GetInput())
-    {
-    vtkMath::UninitializeBounds(this->Bounds);
-    return this->Bounds;
-    }
-  else
-    {
-    vtkImageData *input = this->GetInput();
-    input->UpdateInformation();
-    double *spacing = input->GetSpacing();
-    double *origin = input->GetOrigin();
-    int *extent = input->GetWholeExtent();
-
-    int swapXBounds = (spacing[0] < 0);  // 1 if true, 0 if false
-    int swapYBounds = (spacing[1] < 0);  // 1 if true, 0 if false
-    int swapZBounds = (spacing[2] < 0);  // 1 if true, 0 if false
-
-    this->Bounds[0] = origin[0] + (extent[0+swapXBounds] * spacing[0]);
-    this->Bounds[2] = origin[1] + (extent[2+swapYBounds] * spacing[1]);
-    this->Bounds[4] = origin[2] + (extent[4+swapZBounds] * spacing[2]);
-
-    this->Bounds[1] = origin[0] + (extent[1-swapXBounds] * spacing[0]);
-    this->Bounds[3] = origin[1] + (extent[3-swapYBounds] * spacing[1]);
-    this->Bounds[5] = origin[2] + (extent[5-swapZBounds] * spacing[2]);
-
-    return this->Bounds;
-    }
 }
 
 //----------------------------------------------------------------------------

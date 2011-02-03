@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Visualization Toolkit
-  Module:    vtkOpenGLImageMapper3D.cxx
+  Module:    vtkOpenGLImageResliceMapper.cxx
 
   Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -12,10 +12,10 @@
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
-#include "vtkOpenGLImageMapper3D.h"
+#include "vtkOpenGLImageResliceMapper.h"
 
 #include "vtkObjectFactory.h"
-#include "vtkImageReslice.h"
+#include "vtkImageResliceToColors.h"
 #include "vtkImageData.h"
 #include "vtkImage.h"
 #include "vtkImageProperty.h"
@@ -35,12 +35,12 @@
 #include "vtkgl.h" // vtkgl namespace
 
 #ifndef VTK_IMPLEMENT_MESA_CXX
-vtkStandardNewMacro(vtkOpenGLImageMapper3D);
+vtkStandardNewMacro(vtkOpenGLImageResliceMapper);
 #endif
 
 //----------------------------------------------------------------------------
 // Initializes an instance, generates a unique index.
-vtkOpenGLImageMapper3D::vtkOpenGLImageMapper3D()
+vtkOpenGLImageResliceMapper::vtkOpenGLImageResliceMapper()
 {
   this->Index = 0;
   this->ImageReslice = 0;
@@ -48,14 +48,14 @@ vtkOpenGLImageMapper3D::vtkOpenGLImageMapper3D()
   this->TextureSize[0] = 0;
   this->TextureSize[1] = 0;
   this->TextureBytesPerPixel = 1;
-  this->ImageReslice = vtkImageReslice::New();
+  this->ImageReslice = vtkImageResliceToColors::New();
   this->ResliceMatrix = vtkMatrix4x4::New();
   this->WorldToDataMatrix = vtkMatrix4x4::New();
   this->SliceToWorldMatrix = vtkMatrix4x4::New();
 }
 
 //----------------------------------------------------------------------------
-vtkOpenGLImageMapper3D::~vtkOpenGLImageMapper3D()
+vtkOpenGLImageResliceMapper::~vtkOpenGLImageResliceMapper()
 {
   if (this->ImageReslice)
     {
@@ -78,7 +78,7 @@ vtkOpenGLImageMapper3D::~vtkOpenGLImageMapper3D()
 
 //----------------------------------------------------------------------------
 // Release the graphics resources used by this texture.
-void vtkOpenGLImageMapper3D::ReleaseGraphicsResources(vtkWindow *renWin)
+void vtkOpenGLImageResliceMapper::ReleaseGraphicsResources(vtkWindow *renWin)
 {
   if (this->Index && renWin && renWin->GetMapped())
     {
@@ -110,7 +110,7 @@ void vtkOpenGLImageMapper3D::ReleaseGraphicsResources(vtkWindow *renWin)
 }
 
 //----------------------------------------------------------------------------
-void vtkOpenGLImageMapper3D::ComputeTextureSize(
+void vtkOpenGLImageResliceMapper::ComputeTextureSize(
   const int extent[6], int &xdim, int &ydim,
   int imageSize[2], int textureSize[2])
 {
@@ -679,7 +679,7 @@ inline void vtkImageMapperShiftScale(
 // array must be freed after use with delete [].  If reuseTexture
 // is set, then the returned data should be loaded into the
 // current texture instead of a new texture being created.
-unsigned char *vtkOpenGLImageMapper3D::MakeTextureData(
+unsigned char *vtkOpenGLImageResliceMapper::MakeTextureData(
   vtkImageProperty *property, vtkImageData *input, int extent[6],
   int &xsize, int &ysize, int &bytesPerPixel,
   int &releaseData, int &reuseTexture)
@@ -689,7 +689,7 @@ unsigned char *vtkOpenGLImageMapper3D::MakeTextureData(
   int textureSize[2];
 
   // compute image size and texture size from extent
-  vtkOpenGLImageMapper3D::ComputeTextureSize(
+  vtkOpenGLImageResliceMapper::ComputeTextureSize(
     extent, xdim, ydim, imageSize, textureSize);
 
   // the texture can only be reused under certain circumstances
@@ -879,7 +879,7 @@ unsigned char *vtkOpenGLImageMapper3D::MakeTextureData(
 
 //----------------------------------------------------------------------------
 // Load the given image extent into a texture and render it
-void vtkOpenGLImageMapper3D::InternalLoad(
+void vtkOpenGLImageResliceMapper::InternalLoad(
   vtkRenderer *ren, vtkImageProperty *property, vtkImageData *input,
   int extent[6])
 {
@@ -1072,7 +1072,7 @@ void vtkOpenGLImageMapper3D::InternalLoad(
 
 //----------------------------------------------------------------------------
 // Determine if a given texture size is supported by the video card
-int vtkOpenGLImageMapper3D::TextureSizeOK(const int size[2])
+int vtkOpenGLImageResliceMapper::TextureSizeOK(const int size[2])
 {
 #ifdef GL_VERSION_1_1
   // First ask OpenGL what the max texture size is
@@ -1101,7 +1101,7 @@ int vtkOpenGLImageMapper3D::TextureSizeOK(const int size[2])
 
 //----------------------------------------------------------------------------
 // Subdivide the image until the pieces fit into texture memory
-void vtkOpenGLImageMapper3D::RecursiveLoad(
+void vtkOpenGLImageResliceMapper::RecursiveLoad(
   vtkRenderer *ren, vtkImageProperty *property, vtkImageData *input,
   int extent[6])
 {
@@ -1110,7 +1110,7 @@ void vtkOpenGLImageMapper3D::RecursiveLoad(
   int textureSize[2];
 
   // compute image size and texture size from extent
-  vtkOpenGLImageMapper3D::ComputeTextureSize(
+  vtkOpenGLImageResliceMapper::ComputeTextureSize(
     extent, xdim, ydim, imageSize, textureSize);
 
   // Check if we can fit this texture in memory
@@ -1156,13 +1156,14 @@ void vtkOpenGLImageMapper3D::RecursiveLoad(
 
 //----------------------------------------------------------------------------
 // Load the texture and the geometry
-void vtkOpenGLImageMapper3D::Load(vtkRenderer *ren, vtkImageProperty *property)
+void vtkOpenGLImageResliceMapper::Load(vtkRenderer *ren, vtkImageProperty *property)
 {
-  vtkImageReslice *reslice = this->ImageReslice;
+  vtkImageResliceToColors *reslice = this->ImageReslice;
   vtkScalarsToColors *lookupTable = this->DefaultLookupTable;
 
   reslice->SetInput(this->GetInput());
   //reslice->OptimizationOff();
+  reslice->GenerateStencilOutputOn();
   if (property)
     {
     double colorWindow = property->GetColorWindow();
@@ -1197,11 +1198,11 @@ void vtkOpenGLImageMapper3D::Load(vtkRenderer *ren, vtkImageProperty *property)
 
 //----------------------------------------------------------------------------
 // Do all the fancy math to set up the reslicing
-void vtkOpenGLImageMapper3D::BuildResliceInformation(vtkRenderer *ren)
+void vtkOpenGLImageResliceMapper::BuildResliceInformation(vtkRenderer *ren)
 {
   // This is where all the fun stuff happens.
   vtkMatrix4x4 *resliceMatrix = this->ResliceMatrix;
-  vtkImageReslice *reslice = this->ImageReslice;
+  vtkImageResliceToColors *reslice = this->ImageReslice;
 
   // Get the projection matrix
   double aspect = ren->GetTiledAspectRatio();
@@ -1373,7 +1374,7 @@ void vtkOpenGLImageMapper3D::BuildResliceInformation(vtkRenderer *ren)
 
 //----------------------------------------------------------------------------
 // Set the modelview transform and load the texture
-void vtkOpenGLImageMapper3D::Render(vtkRenderer *ren, vtkImage *prop)
+void vtkOpenGLImageResliceMapper::Render(vtkRenderer *ren, vtkImage *prop)
 {
   vtkImageProperty *property = prop->GetProperty();
 
@@ -1412,6 +1413,9 @@ void vtkOpenGLImageMapper3D::Render(vtkRenderer *ren, vtkImage *prop)
       case VTK_CUBIC_INTERPOLATION:
         interpMode = VTK_RESLICE_CUBIC;
         break;
+      case VTK_LANCZOS_INTERPOLATION:
+        interpMode = VTK_RESLICE_LANCZOS;
+        break;
       }
     this->ImageReslice->SetInterpolationMode(interpMode);
     }
@@ -1448,19 +1452,19 @@ void vtkOpenGLImageMapper3D::Render(vtkRenderer *ren, vtkImage *prop)
 }
 
 //----------------------------------------------------------------------------
-//int vtkOpenGLImageMapper3D::IsMatrixOblique(vtkMatrix4x4 *matrix)
+//int vtkOpenGLImageResliceMapper::IsMatrixOblique(vtkMatrix4x4 *matrix)
 //{
   // Don't worry about in-plane rotation, just out-of-plane rotation.
 //}
 
 //----------------------------------------------------------------------------
-void vtkOpenGLImageMapper3D::PrintSelf(ostream& os, vtkIndent indent)
+void vtkOpenGLImageResliceMapper::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 }
 
 //----------------------------------------------------------------------------
-void vtkOpenGLImageMapper3D::ReportReferences(vtkGarbageCollector* collector)
+void vtkOpenGLImageResliceMapper::ReportReferences(vtkGarbageCollector* collector)
 {
   this->Superclass::ReportReferences(collector);
   // These filters share our input and are therefore involved in a

@@ -76,6 +76,7 @@ SET( Kit_SRCS
   vtkImageActor.cxx
   vtkImageMapper.cxx
   vtkImageMapper3D.cxx
+  vtkImageResliceMapper.cxx
   vtkImageProperty.cxx
   vtkImageViewer2.cxx
   vtkImageViewer.cxx
@@ -249,7 +250,7 @@ SET( KitOpenGL_SRCS
   vtkOpenGLHardwareSupport.cxx
   vtkOpenGLImageActor.cxx
   vtkOpenGLImageMapper.cxx
-  vtkOpenGLImageMapper3D.cxx
+  vtkOpenGLImageResliceMapper.cxx
   vtkOpenGLLight.cxx
   vtkOpenGLLightingPainter.cxx
   vtkOpenGLPainterDeviceAdapter.cxx
@@ -293,6 +294,7 @@ SET_SOURCE_FILES_PROPERTIES(
   vtkCuller
   vtkExporter
   vtkGPUInfoList
+  vtkImageMapper3D
   vtkImageProcessingPass
   vtkImporter
   vtkInteractorObserver
@@ -707,7 +709,7 @@ IF (VTK_USE_MANGLED_MESA)
                  vtkMesaDisplayListPainter.cxx
                  vtkMesaImageActor.cxx
                  vtkMesaImageMapper.cxx
-                 vtkMesaImageMapper3D.cxx
+                 vtkMesaImageResliceMapper.cxx
                  vtkMesaLight.cxx
                  vtkMesaLightingPainter.cxx
                  vtkMesaPainterDeviceAdapter.cxx

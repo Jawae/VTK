@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Visualization Toolkit
-  Module:    vtkMesaImageMapper3D.h
+  Module:    vtkMesaImageResliceMapper.h
 
   Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -12,19 +12,19 @@
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
-// .NAME vtkMesaImageMapper3D - OpenGL mapper for image slice display
+// .NAME vtkMesaImageResliceMapper - OpenGL mapper for image slice display
 // .SECTION Description
-// vtkMesaImageMapper3D is a concrete implementation of the abstract
-// class vtkImageMapper3D that interfaces to the Mesa rendering library.
+// vtkMesaImageResliceMapper is a concrete implementation of the abstract
+// class vtkImageResliceMapper that interfaces to the Mesa rendering library.
 // Depending on the operations that are being performed, it will either
 // do the rendering completely on the GPU, or will use a combination of
 // CPU and GPU computations.  The CPU is used for operations like oblique
 // slice extraction and cubic interpolation.
 
-#ifndef __vtkMesaImageMapper3D_h
-#define __vtkMesaImageMapper3D_h
+#ifndef __vtkMesaImageResliceMapper_h
+#define __vtkMesaImageResliceMapper_h
 
-#include "vtkImageMapper3D.h"
+#include "vtkImageResliceMapper.h"
 
 class vtkWindow;
 class vtkRenderer;
@@ -35,11 +35,12 @@ class vtkImageData;
 class vtkImageReslice;
 class vtkMatrix4x4;
 
-class VTK_RENDERING_EXPORT vtkMesaImageMapper3D : public vtkImageMapper3D
+class VTK_RENDERING_EXPORT vtkMesaImageResliceMapper :
+  public vtkImageResliceMapper
 {
 public:
-  static vtkMesaImageMapper3D *New();
-  vtkTypeMacro(vtkMesaImageMapper3D,vtkImageMapper3D);
+  static vtkMesaImageResliceMapper *New();
+  vtkTypeMacro(vtkMesaImageResliceMapper,vtkImageResliceMapper);
   virtual void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -57,8 +58,8 @@ public:
   void ReleaseGraphicsResources(vtkWindow *);
 
 protected:
-  vtkMesaImageMapper3D();
-  ~vtkMesaImageMapper3D();
+  vtkMesaImageResliceMapper();
+  ~vtkMesaImageResliceMapper();
 
   // Description:
   // Non-recursive internal method, generate a single texture
@@ -119,8 +120,8 @@ protected:
   int TextureBytesPerPixel;
 
 private:
-  vtkMesaImageMapper3D(const vtkMesaImageMapper3D&);  // Not implemented.
-  void operator=(const vtkMesaImageMapper3D&);  // Not implemented.
+  vtkMesaImageResliceMapper(const vtkMesaImageResliceMapper&);  // Not implemented.
+  void operator=(const vtkMesaImageResliceMapper&);  // Not implemented.
 };
 
 #endif

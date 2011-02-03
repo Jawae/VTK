@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Visualization Toolkit
-  Module:    vtkMesaImageMapper3D.cxx
+  Module:    vtkMesaImageResliceMapper.cxx
 
   Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -19,23 +19,23 @@
 
 #include <math.h>
 #include "vtkToolkits.h"
-#include "vtkMesaImageMapper3D.h"
+#include "vtkMesaImageResliceMapper.h"
 #include "vtkMesaCamera.h"
 #include "vtkMesaRenderer.h"
 #include "vtkMesaRenderWindow.h"
 
 
 // make sure this file is included before the #define takes place
-// so we don't get two vtkMesaImageMapper3D classes defined.
+// so we don't get two vtkMesaImageResliceMapper classes defined.
 #include "vtkOpenGLImageMapper3D.h"
-#include "vtkMesaImageMapper3D.h"
+#include "vtkMesaImageResliceMapper.h"
 
-// Make sure vtkMesaImageMapper3D is a copy of vtkOpenGLImageMapper3D
-// with vtkOpenGLImageMapper3D replaced with vtkMesaImageMapper3D
-#define vtkOpenGLImageMapper3D vtkMesaImageMapper3D
+// Make sure vtkMesaImageResliceMapper is a copy of vtkOpenGLImageMapper3D
+// with vtkOpenGLImageMapper3D replaced with vtkMesaImageResliceMapper
+#define vtkOpenGLImageMapper3D vtkMesaImageResliceMapper
 #define vtkOpenGLRenderWindow vtkMesaRenderWindow
 #include "vtkOpenGLImageMapper3D.cxx"
 #undef vtkOpenGLImageMapper3D
 #undef vtkOpenGLRenderWindow
 
-vtkStandardNewMacro(vtkMesaImageMapper3D);
+vtkStandardNewMacro(vtkMesaImageResliceMapper);

@@ -28,11 +28,13 @@ reader.SetFilePrefix("" + str(VTK_DATA_ROOT) + "/Data/headsq/quarter")
 #reader.SetDataExtent(0,255,0,255,1,93)
 #reader.SetDataSpacing(0.8,0.8,1.5)
 #reader.SetFilePrefix("" + str(VTK_DATA_ROOT) + "/Data/fullHead/headsq")
+reader.Update()
 
 colors = vtk.vtkImageMapToColors()
 colors.SetInputConnection(reader.GetOutputPort())
 colors.SetLookupTable(table)
 colors.SetOutputFormatToRGBA()
+colors.Update()
 
 # Create the RenderWindow, Renderer and both Actors
 ren1 = vtk.vtkRenderer()
@@ -41,7 +43,7 @@ renWin.AddRenderer(ren1)
 iren = vtk.vtkRenderWindowInteractor()
 iren.SetRenderWindow(renWin)
 
-im = vtk.vtkOpenGLImageMapper3D()
+im = vtk.vtkImageResliceMapper()
 im.SetInputConnection(reader.GetOutputPort())
 
 ip = vtk.vtkImageProperty()
@@ -55,7 +57,7 @@ ia.SetMapper(im)
 ia.SetProperty(ip)
 
 # a second image to superimpose on the first
-im2 = vtk.vtkOpenGLImageMapper3D()
+im2 = vtk.vtkImageResliceMapper()
 im2.SetInputConnection(reader.GetOutputPort())
 
 ip2 = vtk.vtkImageProperty()
@@ -72,7 +74,7 @@ ia2.SetProperty(ip2)
 ren1.AddViewProp(ia)
 #ren1.AddViewProp(ia2)
 ren1.SetBackground(0.1,0.2,0.4)
-renWin.SetSize(400,400)
+renWin.SetSize(300,300)
 
 iren = vtk.vtkRenderWindowInteractor()
 style = vtk.vtkInteractorStyleImage()

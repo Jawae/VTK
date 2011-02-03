@@ -9,17 +9,26 @@ vtkImageReader2 reader
   reader SetDataScalarTypeToUnsignedShort
   reader UpdateWholeExtent
 
-vtkOpenGLImageMapper3D im
-im SetInputConnection [ reader GetOutputPort ]
+vtkOpenGLImageResliceMapper im
+  im SetInputConnection [ reader GetOutputPort ]
 
 vtkImageProperty ip
-ip SetColorWindow 2000
-ip SetColorLevel 1000
-ip SetInterpolationTypeToLinear
+  ip SetColorWindow 2000
+  ip SetColorLevel 1000
+  ip SetInterpolationTypeToLinear
 
 vtkImage ia
-ia SetMapper im
-ia SetProperty ip
+  ia SetMapper im
+  ia SetProperty ip
+
+vtkOutlineFilter outline
+  outline SetInputConnection [reader GetOutputPort ]
+
+vtkPolyDataMapper om
+  om SetInputConnection [ outline GetOutputPort ]
+
+vtkActor oa
+  oa SetMapper om
 
 vtkRenderer renderer
 vtkRenderWindow window
@@ -33,6 +42,7 @@ vtkRenderWindowInteractor interactor
   interactor SetRenderWindow window
 
 renderer AddViewProp ia
+renderer AddViewProp oa
 renderer SetBackground 0.1 0.2 0.4
 window SetSize 400 400
 window SetInteractor interactor

@@ -264,42 +264,6 @@ public:
   vtkGetMacro(OutputDimensionality, int);
 
   // Description:
-  // Set the desired output scalar type.  Use "Default" to use
-  // the same scalar type as the input.  The pixel values are
-  // always clamped to the limits of the type.
-  vtkSetMacro(OutputScalarType, int);
-  vtkGetMacro(OutputScalarType, int);
-  void SetOutputScalarTypeToDefault()
-    {this->SetOutputScalarType(VTK_VOID);}
-  void SetOutputScalarTypeToDouble()
-    {this->SetOutputScalarType(VTK_DOUBLE);}
-  void SetOutputScalarTypeToFloat()
-    {this->SetOutputScalarType(VTK_FLOAT);}
-  void SetOutputScalarTypeToLong()
-    {this->SetOutputScalarType(VTK_LONG);}
-  void SetOutputScalarTypeToUnsignedLong()
-    {this->SetOutputScalarType(VTK_UNSIGNED_LONG);};
-  void SetOutputScalarTypeToInt()
-    {this->SetOutputScalarType(VTK_INT);}
-  void SetOutputScalarTypeToUnsignedInt()
-    {this->SetOutputScalarType(VTK_UNSIGNED_INT);}
-  void SetOutputScalarTypeToShort()
-    {this->SetOutputScalarType(VTK_SHORT);}
-  void SetOutputScalarTypeToUnsignedShort()
-    {this->SetOutputScalarType(VTK_UNSIGNED_SHORT);}
-  void SetOutputScalarTypeToChar()
-    {this->SetOutputScalarType(VTK_CHAR);}
-  void SetOutputScalarTypeToUnsignedChar()
-    {this->SetOutputScalarType(VTK_UNSIGNED_CHAR);}
-
-  // Description:
-  // Set a lookup table to apply to the data.  If this is set,
-  // then the output will be RGBA unsigned char.  Any voxels
-  // that are out of bounds will be set to the BackgroundColor.
-  void SetLookupTable(vtkScalarsToColors *table);
-  vtkScalarsToColors *GetLookupTable() { return this->LookupTable; }
-
-  // Description:
   // When determining the modified time of the filter, 
   // this check the modified time of the transform and matrix.
   unsigned long int GetMTime();
@@ -343,8 +307,10 @@ public:
 
   // Description:
   // Get the output stencil.
-  vtkImageStencilData *GetStencilOutput() {
-    return this->StencilOutput; }
+  vtkAlgorithmOutput *GetStencilOutputPort() {
+    return this->GetOutputPort(1); }
+  vtkImageStencilData *GetStencilOutput();
+  void SetStencilOutput(vtkImageStencilData *stencil);
 
 protected:
   vtkImageReslice();
@@ -371,15 +337,41 @@ protected:
   int ComputeOutputSpacing;
   int ComputeOutputOrigin;
   int ComputeOutputExtent;
-  int OutputScalarType;
   int GenerateStencilOutput;
-  vtkImageStencilData *StencilOutput;
-  vtkScalarsToColors *LookupTable;
 
   vtkMatrix4x4 *IndexMatrix;
   vtkAbstractTransform *OptimizedTransform;
 
+  // Description:
+  // This should be set to 1 by derived classes that override the
+  // ConvertScalars method.
+  int HasConvertScalars;
+
+  // Description:
+  // This should be overridden by derived classes that operate on
+  // the interpolated data before it is placed in the output.
+  virtual int ConvertScalarInfo(int &scalarType, int &numComponents);
+
+  // Description:
+  // This should be overridden by derived classes that operate on
+  // the interpolated data before it is placed in the output.
+  // The input data will usually be double or float (since the
+  // interpolation routines use floating-point) but it could be
+  // of any type.  This method will be called from multiple threads,
+  // so it must be thread-safe in derived classes.
+  virtual void ConvertScalars(void *inPtr, void *outPtr,
+                              int inputType, int inputNumComponents,
+                              int count, int idX, int idY, int idZ,
+                              int threadId);
+
+  void ConvertScalarsBase(void *inPtr, void *outPtr,
+                          int inputType, int inputNumComponents,
+                          int count, int idX, int idY, int idZ, int threadId) {
+    this->ConvertScalars(inPtr, outPtr, inputType, inputNumComponents,
+                         count, idX, idY, idZ, threadId); }
+
   void GetAutoCroppedOutputBounds(vtkInformation *inInfo, double bounds[6]);
+  virtual void AllocateOutputData(vtkImageData *output, int *uExtent);
   virtual int RequestInformation(vtkInformation *, vtkInformationVector **,
                                  vtkInformationVector *);
   virtual int RequestUpdateExtent(vtkInformation *, vtkInformationVector **,
@@ -390,6 +382,7 @@ protected:
                                    vtkImageData ***inData,
                                    vtkImageData **outData, int ext[6], int id);
   virtual int FillInputPortInformation(int port, vtkInformation *info);
+  virtual int FillOutputPortInformation(int port, vtkInformation *info);
 
   vtkMatrix4x4 *GetIndexMatrix(vtkInformation *inInfo,
                                vtkInformation *outInfo);
