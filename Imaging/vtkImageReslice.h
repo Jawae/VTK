@@ -58,6 +58,8 @@
 #define VTK_RESLICE_LINEAR 1
 #define VTK_RESLICE_RESERVED_2 2
 #define VTK_RESLICE_CUBIC 3
+#define VTK_RESLICE_LANCZOS 4
+#define VTK_RESLICE_KAISER 5
 
 class vtkImageData;
 class vtkAbstractTransform;
@@ -195,9 +197,12 @@ public:
   vtkBooleanMacro(Border, int);
 
   // Description:
-  // Set interpolation mode (default: nearest neighbor). 
+  // Set interpolation mode (default: nearest neighbor).  Also
+  // see SetInterpolationSizeParameter, which is valid for the
+  // Lanczos and Kaiser windowed sinc interpolation interpolation
+  // methods.
   vtkSetClampMacro(InterpolationMode, int,
-                   VTK_RESLICE_NEAREST, VTK_RESLICE_CUBIC);
+                   VTK_RESLICE_NEAREST, VTK_RESLICE_KAISER);
   vtkGetMacro(InterpolationMode, int);
   void SetInterpolationModeToNearestNeighbor() {
     this->SetInterpolationMode(VTK_RESLICE_NEAREST); };
@@ -205,7 +210,23 @@ public:
     this->SetInterpolationMode(VTK_RESLICE_LINEAR); };
   void SetInterpolationModeToCubic() {
     this->SetInterpolationMode(VTK_RESLICE_CUBIC); };
+  void SetInterpolationModeToLanczos() {
+    this->SetInterpolationMode(VTK_RESLICE_LANCZOS); };
+  void SetInterpolationModeToKaiser() {
+    this->SetInterpolationMode(VTK_RESLICE_KAISER); };
   virtual const char *GetInterpolationModeAsString();
+
+  // Description:
+  // Set the size parameter for any interpolation kernel
+  // that takes such a parameter.  For windowed sinc methods
+  // such as Lanczos and Kaiser, this is the half-width of
+  // the kernel.  This parameter must be an integer between
+  // 1 and 7, and it has a default value of 3.  Note that
+  // the alpha parameter for Kaiser is automatically forced
+  // to three times this value, and cannot be modified
+  // independently.
+  vtkSetClampMacro(InterpolationSizeParameter, int, 1, 7);
+  vtkGetMacro(InterpolationSizeParameter, int);
 
   // Description:
   // Turn on and off optimizations (default on, they should only be
@@ -325,6 +346,7 @@ protected:
   int Mirror;
   int Border;
   int InterpolationMode;
+  int InterpolationSizeParameter;
   int Optimization;
   double BackgroundColor[4];
   double OutputOrigin[3];
@@ -388,6 +410,8 @@ protected:
                                vtkInformation *outInfo);
   vtkAbstractTransform *GetOptimizedTransform() { 
     return this->OptimizedTransform; };
+
+  void BuildInterpolationTables();
 
 private:
   vtkImageReslice(const vtkImageReslice&);  // Not implemented.
