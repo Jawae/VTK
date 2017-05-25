@@ -808,7 +808,19 @@ void vtkWrap_ExpandTypedefs(
   int i, j, n;
   FunctionInfo *funcInfo;
   const char *newclass;
-
+  const char *scope = data->Name;
+/*
+  if (data->Template)
+  {
+    if (strcmp(data->Name, "vtkGenericDataArray") == 0) {
+      scope = "vtkGenericDataArray<DerivedT,ValueTypeT>";
+    }
+    if (strcmp(data->Name, "vtkSOADataArrayTemplate") == 0) {
+      scope = "vtkSOADataArrayTemplate<ValueTypeT>";
+    }
+    fprintf(stderr, "XXXXX TEMPLATED %s\n", scope);
+  }
+*/
   n = data->NumberOfSuperClasses;
   for (i = 0; i < n; i++)
   {
@@ -831,7 +843,7 @@ void vtkWrap_ExpandTypedefs(
       for (j = 0; j < funcInfo->NumberOfParameters; j++)
       {
         vtkParseHierarchy_ExpandTypedefsInValue(
-          hinfo, funcInfo->Parameters[j], finfo->Strings, data->Name);
+          hinfo, funcInfo->Parameters[j], finfo->Strings, scope);
 #ifndef VTK_PARSE_LEGACY_REMOVE
         if (j < MAX_ARGS)
         {
@@ -855,7 +867,7 @@ void vtkWrap_ExpandTypedefs(
       if (funcInfo->ReturnValue)
       {
         vtkParseHierarchy_ExpandTypedefsInValue(
-          hinfo, funcInfo->ReturnValue, finfo->Strings, data->Name);
+          hinfo, funcInfo->ReturnValue, finfo->Strings, scope);
 #ifndef VTK_PARSE_LEGACY_REMOVE
         if (!vtkWrap_IsFunction(funcInfo->ReturnValue))
         {
@@ -866,6 +878,17 @@ void vtkWrap_ExpandTypedefs(
       }
     }
   }
+/*
+  n = data->NumberOfTypedefs;
+  for (i = 0; i < n; i++)
+  {
+    if (data->Typedefs[i]->Access == VTK_ACCESS_PUBLIC)
+    {
+      vtkParseHierarchy_ExpandTypedefsInValue(
+        hinfo, data->Typedefs[i], finfo->Strings, scope);
+    }
+  }
+*/
 }
 
 /* -------------------------------------------------------------------- */

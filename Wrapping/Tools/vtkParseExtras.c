@@ -398,6 +398,13 @@ void vtkParse_ExpandTypedefs(
        (valinfo->Type & VTK_PARSE_BASE_TYPE) == VTK_PARSE_UNKNOWN) &&
       valinfo->Class != 0)
   {
+   int watchit = 0;
+   if (strcmp(valinfo->Class, "vtkSOADataArrayTemplate<ValueType>") == 0)
+   {
+     fprintf(stderr, "YESSS ");
+     watchit = 1;
+   }
+
    for (i = 0; i < n; i++)
    {
      if (typedefinfo[i] && strcmp(valinfo->Class, typedefinfo[i]->Name) == 0)
@@ -411,6 +418,12 @@ void vtkParse_ExpandTypedefs(
      /* in case type appears as a template arg of another type */
      valinfo->Class = vtkparse_string_replace(
        cache, valinfo->Class, n, name, val);
+   }
+   if (watchit)
+   {
+     fprintf(stderr, "%s\n", valinfo->Class);
+     fprintf(stderr, "typedef %s\n", (*typedefinfo)->Name);
+     fprintf(stderr, "value %s\n", (*typedefinfo)->Class);
    }
   }
 }
